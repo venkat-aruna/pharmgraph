@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PharmGraph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg: #060d1a;
+            --surface: #0d1b2e;
+            --surface2: #0f2035;
+            --surface3: #142845;
+            --border: #1e3a5f;
+            --border2: #2d5580;
+            --text: #cdd9e5;
+            --dim: #5c7a9a;
+            --dim2: #3d5a7a;
+            --accent: #38bdf8;
+            --accent2: #0ea5e9;
+            --gene: #f59e0b;
+            --drug: #38bdf8;
+            --variant: #a78bfa;
+            --disease: #f87171;
+            --pop: #34d399;
+            --gwas: #c084fc;
+            --predict: #fb923c;
+            --r: 8px;
+            --r2: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            font-size: 13px
+        }
+
+        /* ── App shell ── */
+        .app {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            height: 100vh
+        }
+
+        /* ── Top bar ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 40;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: .1em;
+            white-space: nowrap
+        }
+
+        .brand sup {
+            font-size: 8px;
+            color: var(--predict);
+            letter-spacing: .05em;
+            margin-left: 2px
+        }
+
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 160px;
+            max-width: 300px
+        }
+
+        .search-wrap input {
+            width: 100%;
+            padding: 6px 10px 6px 28px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            color: var(--text);
+            font-size: 12px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-wrap input:focus {
+            border-color: var(--accent)
+        }
+
+        .si {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dim);
+            font-size: 12px;
+            pointer-events: none
+        }
+
+        .ac-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            z-index: 200;
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, .6)
+        }
+
+        .ac-list.open {
+            display: block
+        }
+
+        .ac-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 11px;
+            font-size: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .ac-item:last-child {
+            border-bottom: none
+        }
+
+        .ac-item:hover {
+            background: var(--surface3)
+        }
+
+        .ac-lbl {
+            flex: 1
+        }
+
+        .ac-type {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            text-transform: uppercase
+        }
+
+        .layer-btns {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0
+        }
+
+        .lbtn {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--dim);
+            font-size: 11px;
+            font-family: 'IBM Plex Mono', monospace;
+            cursor: pointer;
+            transition: .15s;
+            white-space: nowrap
+        }
+
+        .lbtn.active {
+            background: #0c2d4a;
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .lbtn:hover:not(.active) {
+            color: var(--text);
+            border-color: var(--border2)
+        }
+
+        .top-stats {
+            font-size: 11px;
+            color: var(--dim);
+            font-family: 'IBM Plex Mono', monospace;
+            white-space: nowrap;
+            margin-left: auto
+        }
+
+        .top-stats span {
+            color: var(--text)
+        }
+
+        .icon-btn {
+            padding: 6px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            color: var(--dim);
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: .15s;
+            white-space: nowrap;
+            flex-shrink: 0
+        }
+
+        .icon-btn:hover {
+            color: var(--text);
+            border-color: var(--border2)
+        }
+
+        .icon-btn.primary {
+            background: #0c2d4a;
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .icon-btn.predict-btn {
+            background: #2d1500;
+            border-color: var(--predict);
+            color: var(--predict)
+        }
+
+        .icon-btn.predict-btn:hover {
+            background: #3d1f00
+        }
+
+        .icon-btn.predict-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed
+        }
+
+        /* ── Browse / Filter bar ── */
+        .browsebar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 39;
+            flex-shrink: 0;
+            flex-wrap: wrap
+        }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            white-space: nowrap;
+            flex-shrink: 0
+        }
+
+        .sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+            flex-shrink: 0
+        }
+
+        .check-lbl {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--dim);
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0
+        }
+
+        .check-lbl input {
+            accent-color: var(--accent)
+        }
+
+        .check-lbl:hover {
+            color: var(--text)
+        }
+
+        /* Combobox */
+        .combo {
+            position: relative;
+            min-width: 120px
+        }
+
+        .combo input {
+            width: 100%;
+            padding: 6px 24px 6px 9px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            color: var(--text);
+            font-size: 11px;
+            outline: none;
+            font-family: inherit;
+            cursor: pointer
+        }
+
+        .combo input:focus {
+            border-color: var(--accent)
+        }
+
+        .combo-arr {
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dim);
+            pointer-events: none;
+            font-size: 9px
+        }
+
+        .combo-list {
+            position: absolute;
+            top: calc(100% + 3px);
+            left: 0;
+            min-width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            z-index: 200;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .6)
+        }
+
+        .combo-list.open {
+            display: block
+        }
+
+        .co {
+            padding: 6px 11px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap
+        }
+
+        .co:hover {
+            background: var(--surface3);
+            color: #fff
+        }
+
+        .co.sel {
+            color: var(--accent)
+        }
+
+        /* Browse entity pills */
+        .entity-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .epill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 9px;
+            border-radius: 20px;
+            border: 1px solid;
+            font-size: 11px;
+            cursor: pointer;
+            transition: .15s;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600
+        }
+
+        .epill:hover {
+            opacity: .85
+        }
+
+        .epill.gene {
+            color: var(--gene);
+            border-color: var(--gene);
+            background: #1f0f00
+        }
+
+        .epill.drug {
+            color: var(--drug);
+            border-color: var(--drug);
+            background: #001f2e
+        }
+
+        .epill.variant {
+            color: var(--variant);
+            border-color: var(--variant);
+            background: #1a0f30
+        }
+
+        .epill.disease {
+            color: var(--disease);
+            border-color: var(--disease);
+            background: #200a0a
+        }
+
+        .epill.active {
+            opacity: 1
+        }
+
+        .epill.gene.active {
+            background: #2d1800
+        }
+
+        .epill.drug.active {
+            background: #003350
+        }
+
+        .epill.variant.active {
+            background: #260f48
+        }
+
+        .epill.disease.active {
+            background: #3a0f0f
+        }
+
+        /* ── Main content area ── */
+        .content-row {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0
+        }
+
+        /* ── Graph canvas ── */
+        .canvas-wrap {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg)
+        }
+
+        #graph {
+            width: 100%;
+            height: 100%;
+            display: block
+        }
+
+        /* ── Browse landing ── */
+        .browse-landing {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            padding: 40px;
+            gap: 24px;
+        }
+
+        .browse-landing.hidden {
+            display: none
+        }
+
+        .landing-title {
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--text);
+            text-align: center;
+            line-height: 1.4
+        }
+
+        .landing-title strong {
+            color: var(--accent);
+            font-weight: 600
+        }
+
+        .landing-subtitle {
+            font-size: 13px;
+            color: var(--dim);
+            text-align: center;
+            max-width: 480px;
+            line-height: 1.6
+        }
+
+        .landing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 560px;
+            width: 100%
+        }
+
+        .landing-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r2);
+            padding: 16px;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .landing-card:hover {
+            border-color: var(--border2);
+            background: var(--surface2)
+        }
+
+        .lc-icon {
+            font-size: 22px;
+            margin-bottom: 8px
+        }
+
+        .lc-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 3px
+        }
+
+        .lc-desc {
+            font-size: 11px;
+            color: var(--dim);
+            line-height: 1.5
+        }
+
+        /* ── Right detail panel ── */
+        .detail-panel {
+            width: 0;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            overflow: hidden;
+            transition: width .25s cubic-bezier(.4, 0, .2, 1);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column
+        }
+
+        .detail-panel.open {
+            width: 300px
+        }
+
+        .dp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 1
+        }
+
+        .dp-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0
+        }
+
+        .dp-close {
+            background: none;
+            border: none;
+            color: var(--dim);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            flex-shrink: 0
+        }
+
+        .dp-close:hover {
+            color: var(--text)
+        }
+
+        .dp-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px
+        }
+
+        .dp-section {
+            margin-bottom: 14px
+        }
+
+        .dp-section-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--dim);
+            margin-bottom: 7px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .dp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 11px
+        }
+
+        .dp-key {
+            color: var(--dim);
+            flex-shrink: 0;
+            max-width: 100px
+        }
+
+        .dp-val {
+            color: var(--text);
+            text-align: right;
+            word-break: break-word;
+            flex: 1
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            line-height: 1.5
+        }
+
+        .b-gwas {
+            background: #3b0a6b;
+            color: var(--gwas)
+        }
+
+        .b-ev {
+            background: #064e3b;
+            color: #6ee7b7
+        }
+
+        .b-pred {
+            background: #431407;
+            color: var(--predict)
+        }
+
+        .b-gene {
+            background: #422006;
+            color: var(--gene)
+        }
+
+        .b-drug {
+            background: #082f49;
+            color: var(--drug)
+        }
+
+        .b-var {
+            background: #2e1065;
+            color: var(--variant)
+        }
+
+        .b-dis {
+            background: #450a0a;
+            color: var(--disease)
+        }
+
+        /* Prediction section in panel */
+        .predict-section {
+            background: var(--surface2);
+            border: 1px solid #3d2000;
+            border-radius: var(--r);
+            padding: 12px;
+            margin-top: 8px
+        }
+
+        .predict-section-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--predict);
+            margin-bottom: 8px
+        }
+
+        .predict-result-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px
+        }
+
+        .predict-result-item:last-child {
+            border-bottom: none
+        }
+
+        .pr-label {
+            flex: 1;
+            color: var(--text)
+        }
+
+        .pr-score {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--predict)
+        }
+
+        .pr-bar-bg {
+            width: 60px;
+            height: 4px;
+            background: var(--surface);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .pr-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--predict)
+        }
+
+        .predict-empty {
+            font-size: 11px;
+            color: var(--dim);
+            text-align: center;
+            padding: 12px 0
+        }
+
+        .predict-loading {
+            font-size: 11px;
+            color: var(--dim);
+            text-align: center;
+            padding: 12px 0;
+            animation: pulse 1.2s ease-in-out infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: .4
+            }
+
+            50% {
+                opacity: 1
+            }
+        }
+
+        /* Freq bars */
+        .freq-grid {
+            display: grid;
+            grid-template-columns: 30px 1fr 34px;
+            align-items: center;
+            gap: 3px 5px;
+            margin-top: 4px
+        }
+
+        .fc {
+            font-size: 9px;
+            color: var(--dim);
+            font-family: 'IBM Plex Mono', monospace
+        }
+
+        .fb-bg {
+            height: 4px;
+            background: var(--surface);
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .fb-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--pop), #6ee7b7)
+        }
+
+        .fv {
+            font-size: 9px;
+            color: var(--text);
+            text-align: right;
+            font-family: 'IBM Plex Mono', monospace
+        }
+
+        /* ── Table drawer ── */
+        .table-drawer {
+            flex-shrink: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .28s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        .table-drawer.open {
+            max-height: 32vh
+        }
+
+        .td-tabs {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface)
+        }
+
+        .td-tab {
+            padding: 8px 14px;
+            font-size: 11px;
+            color: var(--dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: .15s;
+            white-space: nowrap;
+            font-family: 'IBM Plex Mono', monospace
+        }
+
+        .td-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent)
+        }
+
+        .td-tab:hover:not(.active) {
+            color: var(--text)
+        }
+
+        .td-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--dim);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0 4px
+        }
+
+        .td-close:hover {
+            color: var(--text)
+        }
+
+        .td-body {
+            overflow-y: auto;
+            max-height: calc(32vh - 70px)
+        }
+
+        .td-search {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .td-search input {
+            width: 100%;
+            padding: 5px 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            color: var(--text);
+            font-size: 11px;
+            outline: none;
+            font-family: inherit
+        }
+
+        .td-search input:focus {
+            border-color: var(--accent)
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px
+        }
+
+        thead th {
+            padding: 7px 12px;
+            text-align: left;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--dim);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            cursor: pointer
+        }
+
+        thead th:hover {
+            color: var(--text)
+        }
+
+        thead th.sorted {
+            color: var(--accent)
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: .1s
+        }
+
+        tbody tr:hover {
+            background: var(--surface2)
+        }
+
+        tbody td {
+            padding: 6px 12px;
+            color: var(--text);
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        tbody td.mono {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px
+        }
+
+        /* ── Graph overlays ── */
+        .legend {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(13, 27, 46, .92);
+            border: 1px solid var(--border);
+            border-radius: var(--r2);
+            padding: 10px 12px;
+            font-size: 11px;
+            z-index: 20
+        }
+
+        .legend-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--dim);
+            margin-bottom: 8px
+        }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px
+        }
+
+        .ls {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .statusbar {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 27, 46, .92);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 5px 12px;
+            font-size: 11px;
+            color: var(--dim);
+            z-index: 20;
+            pointer-events: none;
+            font-family: 'IBM Plex Mono', monospace;
+            max-width: 480px;
+            text-align: center;
+            white-space: nowrap
+        }
+
+        .center-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--dim);
+            font-size: 14px;
+            z-index: 4;
+            pointer-events: none;
+            text-align: center;
+            padding: 40px
+        }
+
+        /* Minimap */
+        #minimap {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            width: 150px;
+            height: 100px;
+            background: rgba(13, 27, 46, .92);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden;
+            z-index: 20
+        }
+
+        #minimap svg {
+            width: 100%;
+            height: 100%
+        }
+
+        .mm-vp {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 1.5;
+            opacity: .7
+        }
+
+        /* Tooltip */
+        #tooltip {
+            position: fixed;
+            pointer-events: none;
+            background: rgba(13, 27, 46, .98);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 9px 12px;
+            color: var(--text);
+            font-size: 11px;
+            line-height: 1.65;
+            max-width: 260px;
+            opacity: 0;
+            transition: opacity .1s;
+            z-index: 300;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, .5);
+            word-break: break-word
+        }
+
+        #tooltip strong {
+            color: #fff;
+            display: block;
+            margin-bottom: 2px
+        }
+
+        .tt-k {
+            color: var(--dim)
+        }
+
+        /* Predicted glow on nodes */
+        .predicted-glow {
+            animation: glow-pulse 1.8s ease-in-out infinite
+        }
+
+        @keyframes glow-pulse {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 4px var(--predict))
+            }
+
+            50% {
+                filter: drop-shadow(0 0 10px var(--predict))
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <span class="brand">PharmGraph<sup>AI</sup></span>
+
+            <div class="search-wrap">
+                <span class="si">⌕</span>
+                <input id="searchInput" type="text" placeholder="Search gene, drug, variant, disease…"
+                    autocomplete="off" />
+                <div class="ac-list" id="acList"></div>
+            </div>
+
+            <div class="layer-btns">
+                <button class="lbtn active" data-layer="base">Core</button>
+                <button class="lbtn" data-layer="pharmgkb">PharmGKB</button>
+                <button class="lbtn" data-layer="both">Both</button>
+            </div>
+
+            <div class="top-stats">nodes <span id="sNodes">0</span> &nbsp;|&nbsp; edges <span id="sEdges">0</span></div>
+
+            <button class="icon-btn predict-btn" id="predictBtn" disabled
+                title="Select a gene or variant node, then click to predict drug-gene interactions">⚡ Predict
+                interactions</button>
+            <button class="icon-btn" id="tableBtn">⊞ Browse</button>
+            <button class="icon-btn" id="resetBtn">↺ Reset</button>
+        </div>
+
+        <!-- BROWSE / FILTER BAR -->
+        <div class="browsebar">
+            <span class="bar-label">Start with</span>
+            <div class="entity-pills" id="entityPills">
+                <div class="epill disease" data-type="disease">◆ Disease</div>
+                <div class="epill gene" data-type="gene">● Gene</div>
+                <div class="epill drug" data-type="drug">■ Drug</div>
+                <div class="epill variant" data-type="variant">▲ Variant</div>
+            </div>
+
+            <div class="sep"></div>
+            <span class="bar-label">Filters</span>
+
+            <div class="combo" id="cEdgeType" data-ph="Edge type">
+                <input type="text" readonly placeholder="Edge type" />
+                <span class="combo-arr">▾</span>
+                <div class="combo-list"></div>
+            </div>
+            <div class="combo" id="cGeneFamily" data-ph="Gene family">
+                <input type="text" placeholder="Gene family" />
+                <span class="combo-arr">▾</span>
+                <div class="combo-list"></div>
+            </div>
+            <div class="combo" id="cSourceDb" data-ph="Source DB">
+                <input type="text" placeholder="Source DB" />
+                <span class="combo-arr">▾</span>
+                <div class="combo-list"></div>
+            </div>
+            <div class="combo" id="cEvidence" data-ph="Evidence">
+                <input type="text" placeholder="Evidence" />
+                <span class="combo-arr">▾</span>
+                <div class="combo-list"></div>
+            </div>
+            <div class="combo" id="cAssoc" data-ph="Association">
+                <input type="text" placeholder="Association" />
+                <span class="combo-arr">▾</span>
+                <div class="combo-list"></div>
+            </div>
+
+            <div class="sep" id="pgxSep" style="display:none"></div>
+            <div id="pgxFilters" style="display:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="bar-label" style="color:var(--variant)">PGx</span>
+                <div class="combo" id="cPgxEv" data-ph="PGx Evidence">
+                    <input type="text" readonly placeholder="PGx Evidence" />
+                    <span class="combo-arr">▾</span>
+                    <div class="combo-list"></div>
+                </div>
+                <div class="combo" id="cPhenotype" data-ph="Phenotype">
+                    <input type="text" placeholder="Phenotype" />
+                    <span class="combo-arr">▾</span>
+                    <div class="combo-list"></div>
+                </div>
+                <div class="combo" id="cPop" data-ph="Population">
+                    <input type="text" readonly placeholder="Population" />
+                    <span class="combo-arr">▾</span>
+                    <div class="combo-list"></div>
+                </div>
+                <label class="check-lbl"><input type="checkbox" id="gwasChk"> GWAS sig</label>
+                <label class="check-lbl"><input type="checkbox" id="hidePopChk" checked> Hide pop</label>
+            </div>
+
+            <div class="sep"></div>
+            <div class="combo" id="cMax" data-ph="Max nodes" style="min-width:100px">
+                <input type="text" readonly placeholder="Max nodes" />
+                <span class="combo-arr">▾</span>
+                <div class="combo-list"></div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content-row">
+
+            <!-- CANVAS -->
+            <div class="canvas-wrap">
+                <svg id="graph"></svg>
+
+                <!-- Browse landing -->
+                <div class="browse-landing" id="browseLanding">
+                    <div class="landing-title">Where do you want to <strong>start?</strong></div>
+                    <div class="landing-subtitle">Select an entity type above to browse the knowledge graph, or search
+                        for a specific gene, drug, variant or disease.</div>
+                    <div class="landing-grid">
+                        <div class="landing-card" data-type="disease">
+                            <div class="lc-icon" style="color:var(--disease)">◆</div>
+                            <div class="lc-title" style="color:var(--disease)">Start with Disease</div>
+                            <div class="lc-desc">Pick a disease and explore associated genes, variants and drugs</div>
+                        </div>
+                        <div class="landing-card" data-type="gene">
+                            <div class="lc-icon" style="color:var(--gene)">●</div>
+                            <div class="lc-title" style="color:var(--gene)">Start with Gene</div>
+                            <div class="lc-desc">Explore pharmacogenes like CYP2C19, BRCA1, VKORC1</div>
+                        </div>
+                        <div class="landing-card" data-type="drug">
+                            <div class="lc-icon" style="color:var(--drug)">■</div>
+                            <div class="lc-title" style="color:var(--drug)">Start with Drug</div>
+                            <div class="lc-desc">Find all genes and variants relevant to a drug of interest</div>
+                        </div>
+                        <div class="landing-card" data-type="variant">
+                            <div class="lc-icon" style="color:var(--variant)">▲</div>
+                            <div class="lc-title" style="color:var(--variant)">Start with Variant</div>
+                            <div class="lc-desc">Look up an rsID and see its clinical pharmacogenomics context</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center overlay -->
+                <div class="center-overlay" id="centerOverlay"></div>
+
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-title">Node types</div>
+                    <div class="legend-row">
+                        <div class="ls"><svg width="16" height="16">
+                                <circle cx="8" cy="8" r="6" fill="#f59e0b" />
+                            </svg></div><span>Gene</span>
+                    </div>
+                    <div class="legend-row">
+                        <div class="ls"><svg width="16" height="16">
+                                <rect x="1" y="1" width="14" height="14" rx="3" fill="#38bdf8" />
+                            </svg></div><span>Drug</span>
+                    </div>
+                    <div class="legend-row">
+                        <div class="ls"><svg width="16" height="16">
+                                <polygon points="8,1 15,15 1,15" fill="#a78bfa" />
+                            </svg></div><span>Variant</span>
+                    </div>
+                    <div class="legend-row">
+                        <div class="ls"><svg width="16" height="16">
+                                <polygon points="8,1 15,8 8,15 1,8" fill="#f87171" />
+                            </svg></div><span>Disease</span>
+                    </div>
+                    <div class="legend-row">
+                        <div class="ls"><svg width="16" height="16">
+                                <polygon points="8,1 15,8 8,15 1,8" fill="#34d399" />
+                            </svg></div><span>Population</span>
+                    </div>
+                    <div style="margin-top:7px;padding-top:7px;border-top:1px solid var(--border)">
+                        <div class="legend-row"><span
+                                style="width:16px;height:2px;background:#334155;display:inline-block;margin-right:8px"></span><span>Base
+                                edge</span></div>
+                        <div class="legend-row"><span
+                                style="width:16px;height:2px;background:#c084fc;display:inline-block;margin-right:8px"></span><span>GWAS
+                                sig</span></div>
+                        <div class="legend-row"><span
+                                style="width:16px;height:2px;background:#fb923c;stroke-dasharray:3,2;display:inline-block;margin-right:8px"></span><span>Predicted</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="statusbar" id="statusbar">Loading graph…</div>
+
+                <!-- Minimap -->
+                <div id="minimap"><svg id="mmSvg"></svg></div>
+
+                <!-- Tooltip -->
+                <div id="tooltip"></div>
+            </div>
+
+            <!-- RIGHT DETAIL PANEL -->
+            <div class="detail-panel" id="detailPanel">
+                <div class="dp-header">
+                    <div class="dp-title" id="dpTitle">Details</div>
+                    <button class="dp-close" id="dpClose">✕</button>
+                </div>
+                <div class="dp-body" id="dpBody">
+                    <div style="color:var(--dim);font-size:11px;text-align:center;padding:24px 0">Click a node or edge
+                        to see details</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE DRAWER -->
+        <div class="table-drawer" id="tableDrawer">
+            <div class="td-tabs">
+                <div class="td-tab active" data-tab="gene">Genes</div>
+                <div class="td-tab" data-tab="drug">Drugs</div>
+                <div class="td-tab" data-tab="variant">Variants</div>
+                <div class="td-tab" data-tab="disease">Diseases</div>
+                <button class="td-close" id="tdClose">✕</button>
+            </div>
+            <div class="td-search"><input id="tableSearch" type="text" placeholder="Search table…" /></div>
+            <div class="td-body">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- .app -->
+
+    <script>
+        // ─── Constants ───────────────────────────────────────────────────────────────
+        const NODE_COLORS = { gene: "#f59e0b", drug: "#38bdf8", variant: "#a78bfa", disease: "#f87171", population: "#34d399" };
+        const NODE_SHAPES = { gene: "circle", drug: "rect", variant: "tri", disease: "diamond", population: "diamond" };
+        const EV_ORDER = { "1A": 0, "1B": 1, "2A": 2, "2B": 3, "3": 4, "4": 5 };
+        const POP_LABELS = { afr: "African/Afr. Am.", amr: "Admixed American", asj: "Ashkenazi Jewish", eas: "East Asian", fin: "Finnish", mid: "Middle Eastern", nfe: "Non-Finn. European", oth: "Other", sas: "South Asian" };
+        const PREDICT_URL = "http://localhost:5000/predict";  // ← set this when your model is ready
+        const PREDICT_MOCK = true;   // ← set to false once your Flask/FastAPI server is running
+
+        const DISEASE_GROUPS = {
+            Anemia: ["anemia", "anaemia", "hemolytic", "haemolytic", "sickle", "thalassemia"],
+            Cancer: ["cancer", "carcinoma", "leukemia", "leukaemia", "lymphoma", "melanoma", "glioma", "tumor", "tumour", "neoplasm", "sarcoma"],
+            Cardiovascular: ["cardiovascular", "cardiac", "heart", "coronary", "myocardial", "hypertension", "arrhythmia", "stroke", "thrombosis"],
+            Diabetes: ["diabetes", "diabetic", "insulin", "glycemia", "glycaemia"],
+            Neurological: ["neuro", "alzheimer", "parkinson", "epilepsy", "seizure", "migraine", "dementia", "schizophrenia", "depression", "bipolar"],
+            Inflammatory: ["inflam", "arthritis", "lupus", "crohn", "colitis", "psoriasis", "asthma", "allerg"],
+            Infectious: ["infect", "viral", "bacterial", "hiv", "hepatitis", "tuberculosis", "malaria", "sepsis"],
+            Renal: ["renal", "kidney", "nephro", "glomerulo"],
+            Pulmonary: ["pulmonary", "lung", "respiratory", "bronchial", "copd", "fibrosis"],
+        };
+        function diseaseGroup(name) {
+            if (!name) return null;
+            const l = name.toLowerCase();
+            for (const [g, kws] of Object.entries(DISEASE_GROUPS)) if (kws.some(k => l.includes(k))) return g;
+            return null;
+        }
+
+        // ─── State ───────────────────────────────────────────────────────────────────
+        const S = {
+            rawGraph: null, pharmGraph: null, filteredGraph: null,
+            selectedNode: null, selectedEdge: null,
+            sim: null, zoomB: null, transform: d3.zoomIdentity,
+            activeLayer: "base",
+            browseType: null,      // "disease"|"gene"|"drug"|"variant" — active pill
+            nodePositions: new Map(),
+            predictResults: null,  // {nodeId → [{label,score}]}
+            tableTab: "gene",
+            tableSortCol: null, tableSortDir: 1,
+            filters: {
+                edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all",
+                association: "all", maxNodes: 200,
+                pgxEvidence: "all", phenotype: "all", population: "all",
+                gwasOnly: false, hidePop: true,
+            }
+        };
+
+        // ─── DOM ─────────────────────────────────────────────────────────────────────
+        const svgEl = d3.select("#graph");
+        const ttEl = document.getElementById("tooltip");
+        const statusEl = document.getElementById("statusbar");
+        const centerEl = document.getElementById("centerOverlay");
+        const landingEl = document.getElementById("browseLanding");
+        const detailPanel = document.getElementById("detailPanel");
+        const dpTitle = document.getElementById("dpTitle");
+        const dpBody = document.getElementById("dpBody");
+        const dpClose = document.getElementById("dpClose");
+        const tableDrawer = document.getElementById("tableDrawer");
+        const tableBtn = document.getElementById("tableBtn");
+        const tdClose = document.getElementById("tdClose");
+        const tableSearch = document.getElementById("tableSearch");
+        const tableHead = document.getElementById("tableHead");
+        const tableBody = document.getElementById("tableBody");
+        const searchInput = document.getElementById("searchInput");
+        const acListEl = document.getElementById("acList");
+        const sNodes = document.getElementById("sNodes");
+        const sEdges = document.getElementById("sEdges");
+        const resetBtn = document.getElementById("resetBtn");
+        const predictBtn = document.getElementById("predictBtn");
+        const gwasChk = document.getElementById("gwasChk");
+        const hidePopChk = document.getElementById("hidePopCheck") || document.getElementById("hidePopChk");
+        const pgxFilters = document.getElementById("pgxFilters");
+        const pgxSep = document.getElementById("pgxSep");
+
+        // ─── Utils ───────────────────────────────────────────────────────────────────
+        const clean = v => { if (v == null) return null; const s = String(v).trim(); return (s === "" || s.toLowerCase() === "nan") ? null : s; };
+        const safeV = v => { if (v == null || v === "") return "—"; if (Array.isArray(v)) return v.length ? v.join(", ") : "—"; return String(v); };
+        const pList = v => { if (Array.isArray(v)) return v.map(clean).filter(Boolean); const s = clean(v); if (!s) return []; return s.split("|").map(clean).filter(Boolean); };
+        const uniq = a => [...new Set(a.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
+        const inclCI = (arr, val) => { if (!val || val === "all") return true; const t = val.toLowerCase(); return arr.some(x => String(x).toLowerCase() === t); };
+
+        // ─── Combobox ────────────────────────────────────────────────────────────────
+        const combos = new Map();
+        function mkCombo(id, onChange, ro = false) {
+            const w = document.getElementById(id); if (!w) return;
+            const inp = w.querySelector("input"), lst = w.querySelector(".combo-list");
+            const ph = w.dataset.ph || "";
+            let opts = ["all"], sel = "all";
+            function render(f = "") {
+                const fl = f.toLowerCase(); lst.innerHTML = "";
+                opts.filter(o => o.toLowerCase().includes(fl)).forEach(o => {
+                    const d = document.createElement("div");
+                    d.className = "co" + (o === sel ? " sel" : "");
+                    d.textContent = o === "all" ? `All ${ph}` : o;
+                    d.addEventListener("mousedown", e => { e.preventDefault(); sel = o; inp.value = o === "all" ? "" : o; lst.classList.remove("open"); onChange(o); });
+                    lst.appendChild(d);
+                });
+                lst.classList.toggle("open", lst.children.length > 0);
+            }
+            inp.addEventListener("focus", () => render(ro ? "" : inp.value));
+            inp.addEventListener("input", () => { if (!ro) render(inp.value); });
+            document.addEventListener("mousedown", e => { if (!w.contains(e.target)) lst.classList.remove("open"); });
+            const api = { get: () => sel, set: v => { sel = v; inp.value = v === "all" ? "" : v; }, pop: arr => { opts = ["all", ...uniq(arr)]; render(ro ? "" : inp.value); } };
+            combos.set(id, api); return api;
+        }
+
+        const cEdgeType = mkCombo("cEdgeType", v => { S.filters.edgeType = v; applyFilters(); }, true);
+        const cGeneFamily = mkCombo("cGeneFamily", v => { S.filters.geneFamily = v; applyFilters(); });
+        const cSourceDb = mkCombo("cSourceDb", v => { S.filters.sourceDb = v; applyFilters(); });
+        const cEvidence = mkCombo("cEvidence", v => { S.filters.evidenceLevel = v; applyFilters(); });
+        const cAssoc = mkCombo("cAssoc", v => { S.filters.association = v; applyFilters(); });
+        const cPgxEv = mkCombo("cPgxEv", v => { S.filters.pgxEvidence = v; applyFilters(); }, true);
+        const cPhenotype = mkCombo("cPhenotype", v => { S.filters.phenotype = v; applyFilters(); });
+        const cPop = mkCombo("cPop", v => { S.filters.population = v; applyFilters(); }, true);
+        const cMax = mkCombo("cMax", v => { S.filters.maxNodes = v === "all" ? 99999 : Number(v); applyFilters(); }, true);
+
+        cEdgeType.pop(["gene_disease", "gene_drug", "variant_gene", "variant_drug", "variant_population"]);
+        cPgxEv.pop(["1A", "1B", "2A", "2B", "3", "4"]);
+        cPop.pop(Object.values(POP_LABELS));
+        cMax.pop(["200", "500", "1000", "2000", "5000", "Max"]);
+        cMax.set("200");
+
+        // ─── Normalize graph ─────────────────────────────────────────────────────────
+        function normalize(graph) {
+            const nodes = (graph.nodes || []).map(n => {
+                const t = clean(n.type || n.node_type || n.group) || "unknown";
+                return {
+                    ...n,
+                    id: String(n.id),
+                    label: clean(n.label || n.name || n.node_name || n.id) || String(n.id),
+                    type: t, group: t, layer: clean(n.layer) || "base",
+                    gene_symbol: clean(n.gene_symbol), gene_name: clean(n.gene_name),
+                    gene_family: uniq([...pList(n.gene_family), ...pList(n.primary_gene_family)]),
+                    primary_gene_family: pList(n.primary_gene_family),
+                    variant_name: clean(n.variant_name), drug_name: clean(n.drug_name), disease_name: clean(n.disease_name),
+                    disease_group: diseaseGroup(clean(n.disease_name || n.label)),
+                    connected_edge_types: pList(n.connected_edge_types),
+                    population_code: clean(n.population_code), population_name: clean(n.population_name),
+                    phenotypes: Array.isArray(n.phenotypes) ? n.phenotypes.filter(Boolean) : pList(n.phenotypes),
+                    evidence_levels: Array.isArray(n.evidence_levels) ? n.evidence_levels : pList(n.evidence_levels),
+                    best_evidence: clean(n.best_evidence),
+                    gwas_significant: Boolean(n.gwas_significant),
+                    best_gwas_p_value: n.best_gwas_p_value != null ? Number(n.best_gwas_p_value) : null,
+                    n_gwas_studies: Number(n.n_gwas_studies || 0),
+                    gwas_traits: Array.isArray(n.gwas_traits) ? n.gwas_traits : pList(n.gwas_traits),
+                    pharmgkb_best_p_value: n.pharmgkb_best_p_value != null ? Number(n.pharmgkb_best_p_value) : null,
+                    predicted: false,
+                };
+            });
+            const nm = new Map(nodes.map(n => [n.id, n]));
+            const links = (graph.links || graph.edges || []).map((e, i) => {
+                const src = typeof e.source === "object" ? String(e.source.id) : String(e.source);
+                const tgt = typeof e.target === "object" ? String(e.target.id) : String(e.target);
+                return {
+                    ...e,
+                    id: clean(e.id) || `lnk_${i}`, source: src, target: tgt,
+                    layer: clean(e.layer) || "base",
+                    edge_type: clean(e.edge_type || e.relation) || "interaction",
+                    relation: clean(e.relation || e.edge_type) || "interaction",
+                    source_type: clean(e.source_type), target_type: clean(e.target_type),
+                    source_label: clean(e.source_label), target_label: clean(e.target_label),
+                    gene_symbol: uniq(pList(e.gene_symbol)),
+                    gene_family: uniq([...pList(e.gene_family), ...pList(e.primary_gene_family)]),
+                    drug_name: uniq(pList(e.drug_name)), variant_name: uniq(pList(e.variant_name)),
+                    disease_name: uniq(pList(e.disease_name)), phenotype_names: uniq(pList(e.phenotype_names)),
+                    evidence_level: uniq(pList(e.evidence_level)), association: uniq(pList(e.association)),
+                    source_database: uniq(pList(e.source_database)),
+                    interaction_score_max: e.interaction_score_max != null ? Number(e.interaction_score_max) : null,
+                    gwas_significant: Boolean(e.gwas_significant),
+                    best_gwas_p_value: e.best_gwas_p_value != null ? Number(e.best_gwas_p_value) : null,
+                    best_gwas_odds_ratio: e.best_gwas_odds_ratio != null ? Number(e.best_gwas_odds_ratio) : null,
+                    best_gwas_beta: e.best_gwas_beta != null ? Number(e.best_gwas_beta) : null,
+                    best_gwas_trait: clean(e.best_gwas_trait),
+                    allele_frequencies: (e.allele_frequencies && typeof e.allele_frequencies === "object") ? e.allele_frequencies : null,
+                    allele_frequency: e.allele_frequency != null ? Number(e.allele_frequency) : null,
+                    population_code: clean(e.population_code), population_name: clean(e.population_name),
+                    predicted: false,
+                };
+            }).filter(l => nm.has(l.source) && nm.has(l.target));
+            return { metadata: graph.metadata || {}, nodes, links };
+        }
+
+        // ─── Active graph merge ───────────────────────────────────────────────────────
+        function activeGraph() {
+            if (S.activeLayer === "base" || !S.pharmGraph) return S.rawGraph;
+            if (S.activeLayer === "pharmgkb") return S.pharmGraph;
+            const nm = new Map();
+            (S.rawGraph.nodes || []).forEach(n => nm.set(n.id, { ...n }));
+            (S.pharmGraph.nodes || []).forEach(n => nm.set(n.id, nm.has(n.id) ? { ...nm.get(n.id), ...n } : { ...n }));
+            const seen = new Set(), links = [];
+            [...(S.rawGraph.links || []), ...(S.pharmGraph.links || [])].forEach(l => { if (!seen.has(l.id)) { seen.add(l.id); links.push(l); } });
+            return { metadata: {}, nodes: [...nm.values()], links };
+        }
+
+        // ─── Populate filter combos ───────────────────────────────────────────────────
+        function populateCombos() {
+            if (!S.rawGraph) return;
+            const fam = [], dbs = [], evs = [], ascs = [], phenos = [];
+            S.rawGraph.nodes.forEach(n => { n.gene_family.forEach(v => fam.push(v)); });
+            S.rawGraph.links.forEach(l => {
+                l.gene_family.forEach(v => fam.push(v)); l.source_database.forEach(v => dbs.push(v));
+                l.evidence_level.forEach(v => evs.push(v)); l.association.forEach(v => ascs.push(v));
+                l.phenotype_names.forEach(v => phenos.push(v));
+            });
+            if (S.pharmGraph) S.pharmGraph.links.forEach(l => l.phenotype_names.forEach(v => phenos.push(v)));
+            cGeneFamily.pop(fam); cSourceDb.pop(dbs); cEvidence.pop(evs); cAssoc.pop(ascs); cPhenotype.pop(phenos);
+        }
+
+        // ─── Entity pill browse mode ──────────────────────────────────────────────────
+        document.querySelectorAll(".epill,.landing-card").forEach(el => {
+            el.addEventListener("click", () => {
+                const t = el.dataset.type;
+                S.browseType = (S.browseType === t && !el.classList.contains("landing-card")) ? null : t;
+                document.querySelectorAll(".epill").forEach(p => p.classList.toggle("active", p.dataset.type === S.browseType));
+                S.selectedNode = null;
+                searchInput.value = "";
+                if (S.browseType) {
+                    hideLanding();
+                    applyFilters();
+                    setStatus(`Showing: ${S.browseType} nodes and connections`);
+                } else {
+                    showLanding();
+                }
+            });
+        });
+
+        function showLanding() { landingEl.classList.remove("hidden"); svgEl.selectAll("*").remove(); }
+        function hideLanding() { landingEl.classList.add("hidden"); }
+
+        // ─── Autocomplete ─────────────────────────────────────────────────────────────
+        function buildAC(kw) {
+            if (!S.rawGraph || !kw || kw.length < 2) { acListEl.classList.remove("open"); return; }
+            const kl = kw.toLowerCase(), ag = activeGraph(), hits = [];
+            for (const n of ag.nodes) {
+                const fs = [n.label, n.gene_symbol, n.gene_name, n.variant_name, n.drug_name, n.disease_name].filter(Boolean);
+                if (fs.some(f => f.toLowerCase().includes(kl))) { hits.push(n); if (hits.length >= 12) break; }
+            }
+            if (!hits.length) { acListEl.classList.remove("open"); return; }
+            acListEl.innerHTML = "";
+            hits.forEach(n => {
+                const item = document.createElement("div"); item.className = "ac-item";
+                const c = NODE_COLORS[n.type] || "#94a3b8";
+                item.innerHTML = `<span class="ac-lbl">${n.label}</span><span class="ac-type" style="background:${c}22;color:${c}">${n.type}</span>`;
+                item.addEventListener("mousedown", e => {
+                    e.preventDefault(); searchInput.value = n.label; acListEl.classList.remove("open");
+                    S.selectedNode = n.id; S.browseType = null;
+                    document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
+                    hideLanding(); applyFilters(); setStatus(`Focused: ${n.label}`);
+                });
+                acListEl.appendChild(item);
+            });
+            acListEl.classList.add("open");
+        }
+        searchInput.addEventListener("input", () => { S.selectedNode = null; buildAC(searchInput.value.trim()); hideLanding(); applyFilters(); });
+        searchInput.addEventListener("keydown", e => { if (e.key === "Escape") { searchInput.value = ""; acListEl.classList.remove("open"); S.selectedNode = null; showLanding(); } });
+        document.addEventListener("mousedown", e => { if (!searchInput.closest(".search-wrap").contains(e.target)) acListEl.classList.remove("open"); });
+
+        // ─── Filter pipeline ──────────────────────────────────────────────────────────
+        function applyFilters() {
+            if (!S.rawGraph) return;
+            const f = S.filters, kw = searchInput.value.trim().toLowerCase(), ag = activeGraph();
+            const rnm = new Map(ag.nodes.map(n => [n.id, n]));
+
+            let links = ag.links.filter(l => {
+                if (f.edgeType !== "all" && l.edge_type !== f.edgeType) return false;
+                if (!inclCI(l.gene_family, f.geneFamily)) return false;
+                if (!inclCI(l.source_database, f.sourceDb)) return false;
+                if (!inclCI(l.evidence_level, f.evidenceLevel)) return false;
+                if (!inclCI(l.association, f.association)) return false;
+                if (l.layer === "pharmgkb") {
+                    if (f.pgxEvidence !== "all" && !inclCI(l.evidence_level, f.pgxEvidence)) return false;
+                    if (f.phenotype !== "all" && !inclCI(l.phenotype_names, f.phenotype)) return false;
+                    if (f.gwasOnly && !l.gwas_significant) return false;
+                    if (f.population !== "all") {
+                        const pc = Object.entries(POP_LABELS).find(([, v]) => v === f.population)?.[0];
+                        if (l.edge_type === "variant_population") { if (l.population_code !== pc) return false; }
+                        else if (l.allele_frequencies) { if (l.allele_frequencies[pc] == null) return false; }
+                    }
+                    if (f.hidePop && l.edge_type === "variant_population") return false;
+                }
+                return true;
+            });
+
+            let nodes = [], allowedIds = new Set();
+
+            // Browse mode: show only selected entity type + 1-hop
+            if (S.browseType && !S.selectedNode && !kw) {
+                const seedNodes = ag.nodes.filter(n => n.type === S.browseType);
+                const seedIds = new Set(seedNodes.map(n => n.id));
+                allowedIds = new Set(seedIds);
+                links.forEach(l => {
+                    if (seedIds.has(l.source)) allowedIds.add(l.target);
+                    if (seedIds.has(l.target)) allowedIds.add(l.source);
+                });
+                nodes = ag.nodes.filter(n => allowedIds.has(n.id));
+                links = links.filter(l => allowedIds.has(l.source) && allowedIds.has(l.target));
+            } else if (S.selectedNode && rnm.has(S.selectedNode)) {
+                const fid = S.selectedNode;
+                const nl = links.filter(l => l.source === fid || l.target === fid);
+                allowedIds = new Set([fid]); nl.forEach(l => { allowedIds.add(l.source); allowedIds.add(l.target); });
+                links = nl; nodes = ag.nodes.filter(n => allowedIds.has(n.id));
+            } else if (kw) {
+                const matched = ag.nodes.filter(n => matchN(n, kw));
+                if (!matched.length) { nodes = []; links = []; }
+                else {
+                    const mids = new Set(matched.map(n => n.id)); allowedIds = new Set(mids);
+                    links.forEach(l => { if (mids.has(l.source)) allowedIds.add(l.target); if (mids.has(l.target)) allowedIds.add(l.source); });
+                    nodes = ag.nodes.filter(n => allowedIds.has(n.id));
+                    links = links.filter(l => allowedIds.has(l.source) && allowedIds.has(l.target));
+                }
+            } else {
+                links.forEach(l => { allowedIds.add(l.source); allowedIds.add(l.target); });
+                nodes = ag.nodes.filter(n => allowedIds.has(n.id));
+            }
+
+            if (f.hidePop) {
+                nodes = nodes.filter(n => n.type !== "population");
+                const nids = new Set(nodes.map(n => n.id));
+                links = links.filter(l => nids.has(l.source) && nids.has(l.target));
+            }
+
+            // Smart cap
+            if (nodes.length > f.maxNodes) {
+                const dm = new Map(); nodes.forEach(n => dm.set(n.id, 0));
+                links.forEach(l => { dm.set(l.source, (dm.get(l.source) || 0) + 1); dm.set(l.target, (dm.get(l.target) || 0) + 1); });
+                const sorted = [...nodes].sort((a, b) => (dm.get(b.id) || 0) - (dm.get(a.id) || 0));
+                const hc = Math.min(50, Math.floor(f.maxNodes * .25));
+                const keep = new Set(); if (S.selectedNode) keep.add(S.selectedNode);
+                sorted.slice(0, hc).forEach(n => keep.add(n.id));
+                links.forEach(l => {
+                    if (keep.has(l.source) && keep.size < f.maxNodes) keep.add(l.target);
+                    if (keep.has(l.target) && keep.size < f.maxNodes) keep.add(l.source);
+                });
+                for (const n of sorted) { if (keep.size >= f.maxNodes) break; keep.add(n.id); }
+                nodes = nodes.filter(n => keep.has(n.id));
+                links = links.filter(l => keep.has(l.source) && keep.has(l.target));
+            }
+
+            const vm = new Map(); nodes.forEach(n => vm.set(n.id, 0));
+            links.forEach(l => { vm.set(l.source, (vm.get(l.source) || 0) + 1); vm.set(l.target, (vm.get(l.target) || 0) + 1); });
+            const fn = nodes.map(n => ({ ...n, degree: vm.get(n.id) || 0, predicted: !!(S.predictResults && S.predictResults[n.id]) }));
+
+            S.filteredGraph = { nodes: fn, links };
+            sNodes.textContent = fn.length; sEdges.textContent = links.length;
+
+            if (!fn.length && (kw || S.browseType)) {
+                centerEl.textContent = "No nodes match current filters."; centerEl.style.display = "flex";
+            } else { centerEl.style.display = "none"; }
+
+            drawGraph();
+            refreshTable();
+        }
+
+        function matchN(n, kw) {
+            return [n.label, n.id, n.gene_symbol, n.gene_name, n.variant_name, n.drug_name, n.disease_name,
+            n.disease_group, n.population_name, ...n.gene_family, ...n.phenotypes, ...n.gwas_traits
+            ].filter(Boolean).some(v => String(v).toLowerCase().includes(kw));
+        }
+
+        // ─── Drawing ──────────────────────────────────────────────────────────────────
+        function getR(n) { return Math.max(6, Math.min(22, 6 + (n.degree || 0) * .6)); }
+        function edgeColor(l) {
+            if (l.predicted) return "#fb923c";
+            if (l.layer === "pharmgkb" && l.gwas_significant) return "#c084fc";
+            if (l.edge_type === "variant_population") return "#34d399";
+            return "#334155";
+        }
+        function edgeW(l) {
+            if (l.layer === "pharmgkb") { const i = EV_ORDER[l.evidence_level?.[0]] ?? 4; return Math.max(1.2, 3.5 - i * .4); }
+            const s = l.interaction_score_max; if (s == null || isNaN(s)) return 1.4;
+            return Math.max(1.4, Math.min(4.5, 1.2 + s * 2.5));
+        }
+        function shapePath(type, r) {
+            switch (NODE_SHAPES[type]) {
+                case "rect": return `M${-r},${-r * .8}h${r * 2}v${r * 1.6}h${-r * 2}Z`;
+                case "tri": return `M0,${-r}L${r * .95},${r * .7}L${-r * .95},${r * .7}Z`;
+                case "diamond": return `M0,${-r}L${r * .85},0L0,${r}L${-r * .85},0Z`;
+                default: return null;
+            }
+        }
+
+        function drawGraph() {
+            const wrap = document.querySelector(".canvas-wrap");
+            const W = wrap.clientWidth, H = wrap.clientHeight;
+            svgEl.selectAll("*").remove();
+            svgEl.attr("viewBox", `0 0 ${W} ${H}`);
+            if (!S.filteredGraph || !S.filteredGraph.nodes.length) return;
+
+            const nodes = S.filteredGraph.nodes.map(n => {
+                const p = S.nodePositions.get(n.id);
+                return {
+                    ...n, x: p?.x ?? W / 2 + (Math.random() - .5) * 220, y: p?.y ?? H / 2 + (Math.random() - .5) * 220,
+                    fx: p?.fx, fy: p?.fy
+                };
+            });
+
+            // Pin disease nodes in centre ring if browse=disease or no browse type
+            const disNodes = nodes.filter(n => n.type === "disease");
+            if (disNodes.length > 0 && disNodes.length <= 30) {
+                const pinned = disNodes.filter(n => !S.nodePositions.has(n.id));
+                if (pinned.length > 0) {
+                    pinned.forEach((n, i) => {
+                        const ang = (i / pinned.length) * Math.PI * 2;
+                        const rad = Math.min(W, H) * .22;
+                        n.fx = W / 2 + Math.cos(ang) * rad; n.fy = H / 2 + Math.sin(ang) * rad;
+                        n.x = n.fx; n.y = n.fy;
+                        S.nodePositions.set(n.id, { x: n.fx, y: n.fy, fx: n.fx, fy: n.fy });
+                    });
+                }
+            }
+
+            const links = S.filteredGraph.links.map(l => ({ ...l }));
+            const nm = new Map(nodes.map(n => [n.id, n]));
+            const zl = svgEl.append("g").attr("class", "zl");
+
+            S.zoomB = d3.zoom().scaleExtent([.08, 8]).on("zoom", ev => {
+                S.transform = ev.transform; zl.attr("transform", ev.transform); updateMM();
+            });
+            svgEl.call(S.zoomB);
+
+            const linkSel = zl.append("g").selectAll("line").data(links).join("line")
+                .attr("stroke", d => edgeColor(d)).attr("stroke-width", d => edgeW(d))
+                .attr("stroke-opacity", .6).style("cursor", "pointer")
+                .on("mouseover", (ev, d) => {
+                    d3.select(ev.currentTarget).attr("stroke-opacity", 1).attr("stroke-width", edgeW(d) + 1.5);
+                    showTT(ev, edgeTT(d, nm));
+                })
+                .on("mousemove", moveTT).on("mouseout", (ev, d) => {
+                    d3.select(ev.currentTarget).attr("stroke-opacity", .6).attr("stroke-width", edgeW(d)); hideTT();
+                })
+                .on("click", (ev, d) => { ev.stopPropagation(); S.selectedEdge = d; openPanel(buildEdgePanel(d, nm)); });
+
+            const nodeSel = zl.append("g").selectAll("g").data(nodes).join("g")
+                .style("cursor", "pointer")
+                .call(d3.drag()
+                    .on("start", (ev, d) => { if (!ev.active) sim.alphaTarget(.15).restart(); d.fx = d.x; d.fy = d.y; })
+                    .on("drag", (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
+                    .on("end", (ev, d) => { if (!ev.active) sim.alphaTarget(0); S.nodePositions.set(d.id, { x: d.x, y: d.y, fx: d.fx, fy: d.fy }); })
+                );
+
+            nodeSel.each(function (d) {
+                const g = d3.select(this), r = getR(d), c = NODE_COLORS[d.type] || "#94a3b8";
+                const sel = d.id === S.selectedNode;
+                const path = shapePath(d.type, r);
+                const el = path
+                    ? g.append("path").attr("d", path)
+                    : g.append("circle").attr("r", r);
+                el.attr("fill", c).attr("stroke", sel ? "#fff" : "rgba(0,0,0,.35)").attr("stroke-width", sel ? 2.5 : 1.2);
+                if (d.gwas_significant)
+                    g.append("circle").attr("r", r + 3.5).attr("fill", "none").attr("stroke", "#c084fc").attr("stroke-width", 1.5).attr("stroke-dasharray", "3,2");
+                if (d.predicted)
+                    g.append("circle").attr("r", r + 5).attr("fill", "none").attr("stroke", "#fb923c").attr("stroke-width", 2).attr("class", "predicted-glow");
+                g.append("text")
+                    .text(d.disease_group && d.type === "disease" ? `[${d.disease_group}] ${d.label}` : d.label)
+                    .attr("fill", "#e2e8f0").attr("font-size", Math.max(9, Math.min(13, 8 + d.degree * .15)) + "px")
+                    .attr("dx", r + 4).attr("dy", 4).style("pointer-events", "none").style("user-select", "none");
+            });
+
+            nodeSel
+                .on("mouseover", (ev, d) => { showTT(ev, nodeTT(d)); d3.select(ev.currentTarget).select("circle,path").attr("stroke", "#fff").attr("stroke-width", 2); })
+                .on("mousemove", moveTT)
+                .on("mouseout", (ev, d) => { hideTT(); const sel = d.id === S.selectedNode; d3.select(ev.currentTarget).select("circle,path").attr("stroke", sel ? "#fff" : "rgba(0,0,0,.35)").attr("stroke-width", sel ? 2.5 : 1.2); })
+                .on("click", (ev, d) => {
+                    ev.stopPropagation(); S.selectedNode = d.id; S.selectedEdge = null;
+                    searchInput.value = d.label; predictBtn.disabled = false;
+                    applyFilters(); setStatus(`Focused: ${d.label}`);
+                    openPanel(buildNodePanel(d));
+                });
+
+            svgEl.on("click", () => { closePanel(); });
+
+            // Simulation
+            const topHubs = [...nodes].sort((a, b) => (b.degree || 0) - (a.degree || 0)).slice(0, 6);
+            const sim = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.edge_type === "variant_population" ? 150 : 90).strength(.25))
+                .force("charge", d3.forceManyBody().strength(d => -200 - (d.degree || 0) * 8))
+                .force("center", d3.forceCenter(W / 2, H / 2))
+                .force("collide", d3.forceCollide().radius(d => getR(d) + 12))
+                .alphaDecay(.03)
+                .on("tick", () => {
+                    linkSel.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                    nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
+                    updateMM();
+                })
+                .on("end", () => {
+                    topHubs.forEach(n => { if (!S.nodePositions.has(n.id)) { n.fx = n.x; n.fy = n.y; S.nodePositions.set(n.id, { x: n.x, y: n.y, fx: n.x, fy: n.y }); } });
+                    nodes.forEach(n => { if (!S.nodePositions.has(n.id)) S.nodePositions.set(n.id, { x: n.x, y: n.y }); });
+                    setStatus(`${S.filteredGraph.nodes.length} nodes · ${S.filteredGraph.links.length} edges`);
+                    updateMM();
+                });
+            S.sim = sim;
+        }
+
+        // ─── Minimap ──────────────────────────────────────────────────────────────────
+        function updateMM() {
+            if (!S.filteredGraph?.nodes.length) return;
+            const mm = document.getElementById("minimap"), mw = mm.clientWidth, mh = mm.clientHeight;
+            const msvg = d3.select("#mmSvg"); msvg.selectAll("*").remove();
+            const wrap = document.querySelector(".canvas-wrap"), W = wrap.clientWidth, H = wrap.clientHeight;
+            const xs = S.filteredGraph.nodes.map(n => n.x).filter(v => v != null && !isNaN(v));
+            const ys = S.filteredGraph.nodes.map(n => n.y).filter(v => v != null && !isNaN(v));
+            if (!xs.length) return;
+            const x0 = Math.min(...xs) - 20, x1 = Math.max(...xs) + 20, y0 = Math.min(...ys) - 20, y1 = Math.max(...ys) + 20;
+            const sc = Math.min(mw / (x1 - x0 || 1), mh / (y1 - y0 || 1)) * .85;
+            const ox = mw / 2 - (x0 + x1) / 2 * sc, oy = mh / 2 - (y0 + y1) / 2 * sc;
+            msvg.append("g").selectAll("line").data(S.filteredGraph.links).join("line")
+                .attr("x1", d => (d.source.x || 0) * sc + ox).attr("y1", d => (d.source.y || 0) * sc + oy)
+                .attr("x2", d => (d.target.x || 0) * sc + ox).attr("y2", d => (d.target.y || 0) * sc + oy)
+                .attr("stroke", "#2d4a6a").attr("stroke-width", .5);
+            msvg.append("g").selectAll("circle").data(S.filteredGraph.nodes).join("circle")
+                .attr("cx", d => (d.x || 0) * sc + ox).attr("cy", d => (d.y || 0) * sc + oy)
+                .attr("r", d => Math.max(1.5, getR(d) * sc * .4))
+                .attr("fill", d => NODE_COLORS[d.type] || "#94a3b8");
+            const t = S.transform;
+            const vx = (-t.x / t.k) * sc + ox, vy = (-t.y / t.k) * sc + oy, vw = (W / t.k) * sc, vh = (H / t.k) * sc;
+            msvg.append("rect").attr("class", "mm-vp").attr("x", vx).attr("y", vy).attr("width", vw).attr("height", vh);
+        }
+
+        // ─── Tooltip ──────────────────────────────────────────────────────────────────
+        function showTT(ev, html) { ttEl.style.opacity = 1; ttEl.innerHTML = html; moveTT(ev); }
+        function moveTT(ev) {
+            const tw = ttEl.offsetWidth || 260, th = ttEl.offsetHeight || 100, m = 12;
+            let x = ev.clientX + m, y = ev.clientY + m;
+            if (x + tw > window.innerWidth - 6) x = ev.clientX - tw - m;
+            if (y + th > window.innerHeight - 6) y = ev.clientY - th - m;
+            ttEl.style.left = x + "px"; ttEl.style.top = y + "px";
+        }
+        function hideTT() { ttEl.style.opacity = 0; }
+        function nodeTT(n) {
+            const c = NODE_COLORS[n.type] || "#94a3b8";
+            const g = n.gwas_significant ? `<span class="badge b-gwas">GWAS✓</span> ` : "";
+            const e = n.best_evidence ? `<span class="badge b-ev">${n.best_evidence}</span> ` : "";
+            const grp = n.disease_group ? ` <span style="color:var(--dim);font-size:9px">[${n.disease_group}]</span>` : "";
+            return `<strong style="color:${c}">${n.label}</strong>${grp}${g}${e}
+    <span class="tt-k">Type</span> ${n.type}<br>
+    ${n.gene_symbol ? `<span class="tt-k">Gene</span> ${n.gene_symbol}<br>` : ""}
+    ${n.drug_name ? `<span class="tt-k">Drug</span> ${n.drug_name}<br>` : ""}
+    <span class="tt-k">Degree</span> ${n.degree}
+    ${n.predicted ? `<br><span class="badge b-pred">⚡ Predicted</span>` : ""}`;
+        }
+        function edgeTT(l, nm) {
+            const src = typeof l.source === "object" ? l.source : nm.get(l.source);
+            const tgt = typeof l.target === "object" ? l.target : nm.get(l.target);
+            const g = l.gwas_significant ? `<span class="badge b-gwas">GWAS✓</span> ` : "";
+            return `<strong>${l.edge_type}</strong> ${g}<br>
+    <span class="tt-k">From</span> ${src?.label || "?"}<br>
+    <span class="tt-k">To</span> ${tgt?.label || "?"}<br>
+    ${l.evidence_level?.length ? `<span class="tt-k">Evidence</span> ${l.evidence_level.join(", ")}<br>` : ""}
+    ${l.best_gwas_p_value != null ? `<span class="tt-k">GWAS p</span> ${l.best_gwas_p_value.toExponential(2)}<br>` : ""}
+    ${l.allele_frequency != null ? `<span class="tt-k">Freq</span> ${(l.allele_frequency * 100).toFixed(2)}%` : ""}`;
+        }
+
+        // ─── Right panel ──────────────────────────────────────────────────────────────
+        function openPanel(html) {
+            dpBody.innerHTML = html; dpTitle.innerHTML = dpBody.querySelector("[data-title]")?.dataset.title || "Details";
+            detailPanel.classList.add("open");
+        }
+        function closePanel() { detailPanel.classList.remove("open"); }
+        dpClose.addEventListener("click", closePanel);
+
+        function row(k, v) {
+            return (!v || v === "—") ? "" :
+                `<div class="dp-row"><span class="dp-key">${k}</span><span class="dp-val">${v}</span></div>`;
+        }
+
+        function buildNodePanel(n) {
+            const c = NODE_COLORS[n.type] || "#94a3b8";
+            const bcls = { gene: "b-gene", drug: "b-drug", variant: "b-var", disease: "b-dis" }[n.type] || "";
+            const title = `<span data-title='<span class="badge ${bcls}">${n.type}</span> &nbsp;${n.label}${n.gwas_significant ? ` <span class="badge b-gwas">GWAS✓</span>` : ""}'></span>`;
+
+            // prediction results for this node
+            const preds = S.predictResults?.[n.id] || [];
+            let predHtml = "";
+            if (preds.length) {
+                predHtml = `<div class="predict-section">
+      <div class="predict-section-title">⚡ Predicted drug-gene interactions</div>
+      ${preds.map(p => `<div class="predict-result-item">
+        <span class="pr-label">${p.label}</span>
+        <div class="pr-bar-bg"><div class="pr-bar-fill" style="width:${Math.round(p.score * 100)}%"></div></div>
+        <span class="pr-score">${(p.score * 100).toFixed(1)}%</span>
+      </div>`).join("")}
+    </div>`;
+            } else if (S.predictResults) {
+                predHtml = `<div class="predict-section"><div class="predict-empty">No predictions for this node</div></div>`;
+            }
+
+            return title + `
+  <div class="dp-section">
+    <div class="dp-section-title">Identity</div>
+    ${row("Label", n.label)}${row("Type", n.type)}${row("Layer", n.layer)}
+    ${row("Gene Symbol", safeV(n.gene_symbol))}${row("Gene Name", safeV(n.gene_name))}
+    ${row("Drug", safeV(n.drug_name))}${row("Variant", safeV(n.variant_name))}
+    ${row("Disease", safeV(n.disease_name))}${row("Disease Group", safeV(n.disease_group))}
+    ${row("Population", safeV(n.population_name))}${row("Degree", n.degree)}
+  </div>
+  <div class="dp-section">
+    <div class="dp-section-title">Evidence & PGx</div>
+    ${row("Evidence Levels", safeV(n.evidence_levels))}
+    ${row("Best Evidence", n.best_evidence ? `<span class="badge b-ev">${n.best_evidence}</span>` : "—")}
+    ${row("Phenotypes", safeV(n.phenotypes))}${row("Gene Families", safeV(n.gene_family))}
+    ${row("Edge Types", safeV(n.connected_edge_types))}
+  </div>
+  <div class="dp-section">
+    <div class="dp-section-title">GWAS Statistics</div>
+    ${row("Significant", n.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
+    ${row("Best p-value", n.best_gwas_p_value != null ? n.best_gwas_p_value.toExponential(3) : "—")}
+    ${row("Studies", n.n_gwas_studies || "—")}${row("Traits", safeV(n.gwas_traits))}
+    ${row("PharmGKB p", n.pharmgkb_best_p_value != null ? n.pharmgkb_best_p_value.toExponential(3) : "—")}
+  </div>
+  ${predHtml}`;
+        }
+
+        function buildEdgePanel(l, nm) {
+            const src = typeof l.source === "object" ? l.source : nm.get(l.source);
+            const tgt = typeof l.target === "object" ? l.target : nm.get(l.target);
+            const title = `<span data-title="<strong>${l.edge_type}</strong>${l.gwas_significant ? ` <span class='badge b-gwas'>GWAS✓</span>` : ""}"></span>`;
+
+            let freqHtml = "";
+            if (l.allele_frequencies) {
+                freqHtml = `<div class="dp-section-title" style="margin-top:6px">Allele Frequencies</div>
+      <div class="freq-grid">`+
+                    Object.entries(l.allele_frequencies).filter(([, v]) => v != null).map(([code, val]) =>
+                        `<span class="fc">${code.toUpperCase()}</span>
+         <div class="fb-bg"><div class="fb-fill" style="width:${Math.round(val * 100)}%"></div></div>
+         <span class="fv">${(val * 100).toFixed(1)}%</span>`
+                    ).join("") + `</div>`;
+            } else if (l.allele_frequency != null) {
+                freqHtml = row("Allele Freq (" + (l.population_name || l.population_code || "") + `)"`, `${(l.allele_frequency * 100).toFixed(3)}%`);
+            }
+
+            return title + `
+  <div class="dp-section">
+    <div class="dp-section-title">Connection</div>
+    ${row("From", src?.label || l.source_label || "?")}${row("To", tgt?.label || l.target_label || "?")}
+    ${row("Edge Type", l.edge_type)}${row("Source DB", safeV(l.source_database))}${row("Layer", l.layer)}
+  </div>
+  <div class="dp-section">
+    <div class="dp-section-title">Evidence</div>
+    ${row("Evidence Level", safeV(l.evidence_level))}${row("Phenotype", safeV(l.phenotype_names))}
+    ${row("Association", safeV(l.association))}${row("Interaction Type", safeV(l.interaction_type))}
+    ${row("PMIDs", safeV(l.pmids))}
+  </div>
+  <div class="dp-section">
+    <div class="dp-section-title">GWAS</div>
+    ${row("Significant", l.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
+    ${row("p-value", l.best_gwas_p_value != null ? l.best_gwas_p_value.toExponential(3) : "—")}
+    ${row("Odds Ratio", l.best_gwas_odds_ratio != null ? l.best_gwas_odds_ratio.toFixed(3) : "—")}
+    ${row("Beta", l.best_gwas_beta != null ? l.best_gwas_beta.toFixed(4) : "—")}
+    ${row("Trait", safeV(l.best_gwas_trait))}
+  </div>
+  <div class="dp-section">
+    <div class="dp-section-title">Scores & Frequencies</div>
+    ${row("Interaction Score", l.interaction_score_max != null ? l.interaction_score_max.toFixed(3) : "—")}
+    ${row("PharmGKB p", l.pharmgkb_best_p_value != null ? l.pharmgkb_best_p_value.toExponential(3) : "—")}
+    ${freqHtml}
+  </div>`;
+        }
+
+        // ─── Table drawer ─────────────────────────────────────────────────────────────
+        const TABLE_COLS = {
+            gene: [{ k: "label", h: "Symbol" }, { k: "gene_name", h: "Full Name" }, { k: "gene_family", h: "Family", f: v => safeV(v) }, { k: "degree", h: "Degree", cls: "mono" }, { k: "connected_edge_types", h: "Edge Types", f: v => safeV(v) }],
+            drug: [{ k: "label", h: "Drug" }, { k: "degree", h: "Degree", cls: "mono" }, { k: "evidence_levels", h: "Evidence", f: v => safeV(v) }, { k: "phenotypes", h: "Phenotypes", f: v => safeV(v) }],
+            variant: [{ k: "label", h: "rsID", cls: "mono" }, { k: "gene_symbol", h: "Gene" }, { k: "best_evidence", h: "Best Ev." }, { k: "gwas_significant", h: "GWAS", f: v => v ? `<span class="badge b-gwas">✓</span>` : "—" }, { k: "best_gwas_p_value", h: "GWAS p", cls: "mono", f: v => v != null ? v.toExponential(2) : "—" }, { k: "degree", h: "Degree", cls: "mono" }],
+            disease: [{ k: "label", h: "Disease" }, { k: "disease_group", h: "Group" }, { k: "degree", h: "Degree", cls: "mono" }],
+        };
+        let tableData = [];
+
+        function refreshTable() {
+            if (!S.rawGraph || !tableDrawer.classList.contains("open")) return;
+            const ag = activeGraph();
+            tableData = ag.nodes.filter(n => n.type === S.tableTab);
+            renderTable();
+        }
+
+        function renderTable() {
+            const cols = TABLE_COLS[S.tableTab] || [];
+            const q = tableSearch.value.trim().toLowerCase();
+            let rows = tableData.filter(n => !q || [n.label, n.gene_name, n.gene_symbol, n.variant_name, n.drug_name, n.disease_name].filter(Boolean).some(v => v.toLowerCase().includes(q)));
+            if (S.tableSortCol) {
+                rows = [...rows].sort((a, b) => {
+                    const av = a[S.tableSortCol] ?? 0, bv = b[S.tableSortCol] ?? 0;
+                    return S.tableSortDir * (typeof av === "number" ? av - bv : String(av).localeCompare(String(bv)));
+                });
+            }
+            tableHead.innerHTML = `<tr>${cols.map(c => `<th class="${S.tableSortCol === c.k ? "sorted" : ""}" data-col="${c.k}">${c.h}${S.tableSortCol === c.k ? (S.tableSortDir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}</tr>`;
+            tableBody.innerHTML = rows.slice(0, 500).map(n =>
+                `<tr data-id="${n.id}">${cols.map(c => {
+                    const raw = n[c.k], val = c.f ? c.f(raw) : safeV(raw);
+                    return `<td class="${c.cls || ""}" title="${safeV(raw)}">${val}</td>`;
+                }).join("")}</tr>`
+            ).join("");
+
+            tableHead.querySelectorAll("th").forEach(th => {
+                th.addEventListener("click", () => {
+                    const col = th.dataset.col;
+                    if (S.tableSortCol === col) S.tableSortDir *= -1; else { S.tableSortCol = col; S.tableSortDir = 1; }
+                    renderTable();
+                });
+            });
+            tableBody.querySelectorAll("tr").forEach(tr => {
+                tr.addEventListener("click", () => {
+                    const id = tr.dataset.id; if (!id) return;
+                    S.selectedNode = id; S.browseType = null;
+                    document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
+                    const ag = activeGraph(); const n = ag.nodes.find(x => x.id === id);
+                    if (n) { searchInput.value = n.label; hideLanding(); applyFilters(); setStatus(`Focused: ${n.label}`); }
+                });
+            });
+        }
+
+        tableBtn.addEventListener("click", () => {
+            tableDrawer.classList.toggle("open"); tableBtn.classList.toggle("primary");
+            if (tableDrawer.classList.contains("open")) refreshTable();
+        });
+        tdClose.addEventListener("click", () => { tableDrawer.classList.remove("open"); tableBtn.classList.remove("primary"); });
+        document.querySelectorAll(".td-tab").forEach(tab => {
+            tab.addEventListener("click", () => {
+                S.tableTab = tab.dataset.tab; S.tableSortCol = null;
+                document.querySelectorAll(".td-tab").forEach(t => t.classList.toggle("active", t === tab));
+                refreshTable();
+            });
+        });
+        tableSearch.addEventListener("input", renderTable);
+
+        // ─── Prediction model ─────────────────────────────────────────────────────────
+        predictBtn.addEventListener("click", async () => {
+            if (!S.selectedNode || !S.rawGraph) return;
+            const ag = activeGraph();
+            const n = ag.nodes.find(x => x.id === S.selectedNode);
+            if (!n) return;
+
+            // Only gene/variant nodes make sense for drug-gene interaction prediction
+            if (!["gene", "variant"].includes(n.type)) {
+                openPanel(buildNoticePanel("Select a gene or variant",
+                    "Drug-gene interaction prediction works on gene and variant nodes.<br>Click a gene (●) or variant (▲) node first.") + buildNodePanel(n));
+                return;
+            }
+
+            predictBtn.disabled = true;
+            predictBtn.textContent = "⚡ Running…";
+            openPanel(`<div class="dp-section">
+    <div class="dp-section-title">⚡ Predicting drug-gene interactions…</div>
+    <div class="predict-loading">Running model for ${n.label}…</div>
+  </div>` + buildNodePanel(n));
+
+            if (PREDICT_MOCK) {
+                // ── MOCK MODE ─────────────────────────────────────────────────────────────
+                // Simulates what your real model will return using actual drug nodes from
+                // the loaded graph. Replace PREDICT_MOCK = false once your server is ready.
+                await new Promise(r => setTimeout(r, 800));
+                handlePredictionResult(n, buildMockPrediction(n, ag), true);
+                return;
+            }
+
+            // ── REAL MODE ─────────────────────────────────────────────────────────────
+            try {
+                const payload = {
+                    node_id: n.id,
+                    node_type: n.type,
+                    label: n.label,
+                    gene_symbol: n.gene_symbol,
+                    variant_name: n.variant_name,
+                    evidence_levels: n.evidence_levels,
+                    gene_family: n.gene_family,
+                    phenotypes: n.phenotypes,
+                    gwas_p_value: n.best_gwas_p_value,
+                };
+                const res = await fetch(PREDICT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                handlePredictionResult(n, data, false);
+            } catch (err) {
+                console.error("Prediction error:", err);
+                openPanel(`<div class="dp-section">
+      <div class="dp-section-title" style="color:var(--predict)">⚡ Model not connected yet</div>
+      <div class="dp-row"><span class="dp-val" style="color:var(--dim)">
+        Set <code style="color:var(--accent)">PREDICT_MOCK = false</code> once your server is running.<br><br>
+        <strong style="color:var(--text)">Endpoint</strong><br>
+        <code style="color:var(--accent)">POST ${PREDICT_URL}</code><br><br>
+        <strong style="color:var(--text)">Input payload</strong><br>
+        <code style="color:var(--dim2);font-size:10px">{ node_id, node_type, label,<br>
+        gene_symbol, variant_name,<br>
+        evidence_levels, gene_family,<br>
+        phenotypes, gwas_p_value }</code><br><br>
+        <strong style="color:var(--text)">Expected response</strong><br>
+        <code style="color:var(--dim2);font-size:10px">{<br>
+        &nbsp;predictions: [{<br>
+        &nbsp;&nbsp;label, drug_id, score,<br>
+        &nbsp;&nbsp;interaction_type, evidence<br>
+        &nbsp;}],<br>
+        &nbsp;predicted_edges: [{<br>
+        &nbsp;&nbsp;source, target,<br>
+        &nbsp;&nbsp;score, interaction_type<br>
+        &nbsp;}],<br>
+        &nbsp;predicted_nodes: [node_id, …]<br>
+        }</code>
+      </span></div>
+    </div>` + buildNodePanel(n));
+                setStatus("Model not connected — see panel for wiring instructions.");
+                predictBtn.disabled = false;
+                predictBtn.textContent = "⚡ Predict interactions";
+            }
+        });
+
+        // ── Mock: picks real drug nodes not yet connected to this node ────────────────
+        function buildMockPrediction(n, ag) {
+            const connected = new Set();
+            ag.links.forEach(l => {
+                if (l.source === n.id && l.target_type === "drug") connected.add(l.target);
+                if (l.target === n.id && l.source_type === "drug") connected.add(l.source);
+            });
+            const types = ["inhibitor", "substrate", "activator", "inducer", "binder"];
+            const drugs = ag.nodes
+                .filter(x => x.type === "drug" && !connected.has(x.id))
+                .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+                .slice(0, 5);
+            const predictions = drugs.map((d, i) => ({
+                label: d.label,
+                drug_id: d.id,
+                score: +(0.95 - i * 0.12).toFixed(2),
+                interaction_type: types[i % types.length],
+                evidence: "mock prediction — replace with real model output",
+            }));
+            const predicted_edges = predictions.map(p => ({
+                source: n.id, target: p.drug_id,
+                score: p.score, interaction_type: p.interaction_type,
+            }));
+            const predicted_nodes = predictions.map(p => p.drug_id);
+            return { predictions, predicted_edges, predicted_nodes };
+        }
+
+        // ── Handle result (real or mock) ─────────────────────────────────────────────
+        // Your model should return:
+        //   predictions:     [{label, drug_id, score, interaction_type, evidence}]
+        //   predicted_edges: [{source, target, score, interaction_type}]  → new graph edges
+        //   predicted_nodes: [node_id, …]                                 → glow highlights
+        function handlePredictionResult(n, data, isMock) {
+            S.predictResults = S.predictResults || {};
+            S.predictResults[n.id] = data.predictions || [];
+
+            // 1. Inject predicted edges as a new visual layer
+            if (data.predicted_edges && S.filteredGraph) {
+                const existingIds = new Set(S.filteredGraph.links.map(l => l.id));
+                const nm = new Map(S.filteredGraph.nodes.map(x => [x.id, x]));
+                (data.predicted_edges || []).forEach((pe, i) => {
+                    const eid = `pred__${n.id}__${pe.target}__${i}`;
+                    if (existingIds.has(eid)) return;
+                    if (!nm.has(pe.source) || !nm.has(pe.target)) return;
+                    S.filteredGraph.links.push({
+                        id: eid,
+                        source: pe.source, target: pe.target,
+                        edge_type: "gene_drug", relation: "gene_drug",
+                        source_type: "gene", target_type: "drug",
+                        layer: "predicted", predicted: true,
+                        interaction_score_max: pe.score || null,
+                        interaction_type: [pe.interaction_type || "predicted"],
+                        evidence_level: [], gene_family: [], drug_name: [],
+                        variant_name: [], disease_name: [], phenotype_names: [],
+                        association: [], source_database: ["model"],
+                        gwas_significant: false, allele_frequencies: null,
+                        source_label: nm.get(pe.source)?.label || pe.source,
+                        target_label: nm.get(pe.target)?.label || pe.target,
+                    });
+                });
+            }
+
+            // 2. Add glow to predicted drug nodes
+            const glowIds = new Set((data.predicted_nodes || []).concat(
+                (data.predictions || []).map(p => p.drug_id).filter(Boolean)
+            ));
+            if (S.filteredGraph) {
+                S.filteredGraph.nodes.forEach(x => { if (glowIds.has(x.id)) x.predicted = true; });
+            }
+
+            // 3. Redraw with new edges + glows, then open panel with ranked list
+            drawGraph();
+            openPanel(buildNodePanel({ ...n, predicted: true }));
+            setStatus(`${isMock ? "[MOCK] " : ""}${(data.predictions || []).length} predicted interactions for ${n.label}`);
+            predictBtn.disabled = false;
+            predictBtn.textContent = "⚡ Predict interactions";
+        }
+
+        function buildNoticePanel(title, msg) {
+            return `<div class="dp-section">
+    <div class="dp-section-title" style="color:var(--predict)">${title}</div>
+    <div class="dp-row"><span class="dp-val" style="color:var(--dim)">${msg}</span></div>
+  </div>`;
+        }
+
+        // ─── Layer toggle ─────────────────────────────────────────────────────────────
+        document.querySelectorAll(".lbtn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                S.activeLayer = btn.dataset.layer;
+                document.querySelectorAll(".lbtn").forEach(b => b.classList.toggle("active", b === btn));
+                const pgx = S.activeLayer !== "base";
+                pgxFilters.style.display = pgx ? "flex" : "none"; pgxSep.style.display = pgx ? "block" : "none";
+                if (pgx && !S.pharmGraph) loadPharmGKB(); else { S.selectedNode = null; applyFilters(); }
+                setStatus(`Layer: ${S.activeLayer}`);
+            });
+        });
+
+        // ─── Checkboxes ───────────────────────────────────────────────────────────────
+        gwasChk.addEventListener("change", () => { S.filters.gwasOnly = gwasChk.checked; applyFilters(); });
+        const hpc = document.getElementById("hidePopChk");
+        if (hpc) hpc.addEventListener("change", () => { S.filters.hidePop = hpc.checked; applyFilters(); });
+
+        // ─── Reset ────────────────────────────────────────────────────────────────────
+        resetBtn.addEventListener("click", () => {
+            searchInput.value = ""; S.selectedNode = null; S.selectedEdge = null; S.browseType = null;
+            S.nodePositions.clear(); S.predictResults = null; predictBtn.disabled = true;
+            S.filters = { edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all", association: "all", maxNodes: 200, pgxEvidence: "all", phenotype: "all", population: "all", gwasOnly: false, hidePop: true };
+            combos.forEach(c => c.set("all")); cMax.set("200");
+            gwasChk.checked = false; if (hpc) hpc.checked = true;
+            document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
+            closePanel(); showLanding(); setStatus("Reset.");
+        });
+
+        // ─── Load functions ───────────────────────────────────────────────────────────
+        function setStatus(m) { statusEl.textContent = m; }
+        const getBN = p => String(p || "").trim();
+        async function fetchJ(path) { const r = await fetch(path); if (!r.ok) throw new Error(`HTTP ${r.status}: ${path}`); return r.json(); }
+
+        async function loadChunkedGraph() {
+            try {
+                setStatus("Loading full_interaction_graph.json…");
+                centerEl.textContent = "Loading graph…"; centerEl.style.display = "flex";
+                const manifest = await fetchJ("full_interaction_graph.json");
+                const nf = (manifest.node_files || []).map(i => getBN(i.file));
+                const ef = (manifest.edge_files || []).map(i => getBN(i.file));
+                if (!nf.length && !ef.length) throw new Error("No chunk files in manifest.");
+                setStatus(`Loading ${nf.length + ef.length} chunks…`);
+                const [nc, ec] = await Promise.all([Promise.all(nf.map(fetchJ)), Promise.all(ef.map(fetchJ))]);
+                const nodes = nc.flatMap(c => c.nodes || []);
+                const links = ec.flatMap(c => c.links || c.edges || []);
+                S.rawGraph = normalize({ metadata: manifest.metadata || {}, nodes, links });
+                populateCombos();
+                centerEl.style.display = "none";
+                showLanding();  // Start in browse/landing mode
+                setStatus(`Loaded ${nodes.length} nodes · ${links.length} edges — pick a starting point above`);
+            } catch (err) {
+                console.error(err);
+                setStatus("Failed to load graph — check console and file paths.");
+                centerEl.textContent = "Could not load full_interaction_graph.json. Start the server with: python3 -m http.server 8000";
+                centerEl.style.display = "flex";
+            }
+        }
+
+        async function loadPharmGKB() {
+            try {
+                setStatus("Loading PharmGKB layer…");
+                const manifest = await fetchJ("pharmgkb_layer.json");
+                const nf = (manifest.node_files || []).map(i => getBN(i.file));
+                const ef = (manifest.edge_files || []).map(i => getBN(i.file));
+                const [nc, ec] = await Promise.all([Promise.all(nf.map(fetchJ)), Promise.all(ef.map(fetchJ))]);
+                const nodes = nc.flatMap(c => c.nodes || []);
+                const links = ec.flatMap(c => c.links || c.edges || []);
+                S.pharmGraph = normalize({ metadata: manifest.metadata || {}, nodes, links });
+                populateCombos(); applyFilters();
+                setStatus(`PharmGKB loaded: ${nodes.length} nodes · ${links.length} edges`);
+            } catch (err) { console.error(err); setStatus("PharmGKB layer failed — check pharmgkb_layer.json."); }
+        }
+
+        // ─── Resize ───────────────────────────────────────────────────────────────────
+        window.addEventListener("resize", () => { if (S.filteredGraph && !landingEl.classList.contains("hidden")) drawGraph(); });
+
+        // ─── Boot ─────────────────────────────────────────────────────────────────────
+        document.addEventListener("DOMContentLoaded", loadChunkedGraph);
+    </script>
+</body>
+
+</html>
