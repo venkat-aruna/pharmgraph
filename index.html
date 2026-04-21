@@ -995,31 +995,7 @@
             padding: 40px
         }
 
-        /* Minimap */
-        #minimap {
-            position: absolute;
-            bottom: 14px;
-            right: 14px;
-            width: 150px;
-            height: 100px;
-            background: rgba(13, 27, 46, .92);
-            border: 1px solid var(--border);
-            border-radius: var(--r);
-            overflow: hidden;
-            z-index: 20
-        }
 
-        #minimap svg {
-            width: 100%;
-            height: 100%
-        }
-
-        .mm-vp {
-            fill: none;
-            stroke: var(--accent);
-            stroke-width: 1.5;
-            opacity: .7
-        }
 
         /* Tooltip */
         #tooltip {
@@ -1088,7 +1064,7 @@
 
         <!-- TOP BAR -->
         <div class="topbar">
-            <span class="brand">PharmGraph</span>
+            <span class="brand" id="brandLogo" style="cursor:pointer" title="Click to reset">PharmGraph</span>
 
             <div class="search-wrap">
                 <span class="si">⌕</span>
@@ -1264,9 +1240,6 @@
                 <!-- Status -->
                 <div class="statusbar" id="statusbar">Loading graph…</div>
 
-                <!-- Minimap -->
-                <div id="minimap"><svg id="mmSvg"></svg></div>
-
                 <!-- Tooltip -->
                 <div id="tooltip"></div>
             </div>
@@ -1391,7 +1364,7 @@
             const inp = w.querySelector("input"), lst = w.querySelector(".combo-list");
             const ph = w.dataset.ph || "";
             let opts = ["all"], sel = "all";
-            function render(f = "") {
+            function render(f = "", open = false) {
                 const fl = f.toLowerCase(); lst.innerHTML = "";
                 opts.filter(o => o.toLowerCase().includes(fl)).forEach(o => {
                     const d = document.createElement("div");
@@ -1400,12 +1373,12 @@
                     d.addEventListener("mousedown", e => { e.preventDefault(); sel = o; inp.value = o === "all" ? "" : o; lst.classList.remove("open"); onChange(o); });
                     lst.appendChild(d);
                 });
-                lst.classList.toggle("open", lst.children.length > 0);
+                if (open) lst.classList.toggle("open", lst.children.length > 0);
             }
-            inp.addEventListener("focus", () => render(ro ? "" : inp.value));
-            inp.addEventListener("input", () => { if (!ro) render(inp.value); });
+            inp.addEventListener("focus", () => render(ro ? "" : inp.value, true));
+            inp.addEventListener("input", () => { if (!ro) render(inp.value, true); });
             document.addEventListener("mousedown", e => { if (!w.contains(e.target)) lst.classList.remove("open"); });
-            const api = { get: () => sel, set: v => { sel = v; inp.value = v === "all" ? "" : v; }, pop: arr => { opts = ["all", ...uniq(arr)]; render(ro ? "" : inp.value); } };
+            const api = { get: () => sel, set: v => { sel = v; inp.value = v === "all" ? "" : v; }, pop: arr => { opts = ["all", ...uniq(arr)]; render(ro ? "" : inp.value, false); } };
             combos.set(id, api); return api;
         }
 
@@ -1796,30 +1769,8 @@
             S.sim = sim;
         }
 
-        // ─── Minimap ──────────────────────────────────────────────────────────────────
-        function updateMM() {
-            if (!S.filteredGraph?.nodes.length) return;
-            const mm = document.getElementById("minimap"), mw = mm.clientWidth, mh = mm.clientHeight;
-            const msvg = d3.select("#mmSvg"); msvg.selectAll("*").remove();
-            const wrap = document.querySelector(".canvas-wrap"), W = wrap.clientWidth, H = wrap.clientHeight;
-            const xs = S.filteredGraph.nodes.map(n => n.x).filter(v => v != null && !isNaN(v));
-            const ys = S.filteredGraph.nodes.map(n => n.y).filter(v => v != null && !isNaN(v));
-            if (!xs.length) return;
-            const x0 = Math.min(...xs) - 20, x1 = Math.max(...xs) + 20, y0 = Math.min(...ys) - 20, y1 = Math.max(...ys) + 20;
-            const sc = Math.min(mw / (x1 - x0 || 1), mh / (y1 - y0 || 1)) * .85;
-            const ox = mw / 2 - (x0 + x1) / 2 * sc, oy = mh / 2 - (y0 + y1) / 2 * sc;
-            msvg.append("g").selectAll("line").data(S.filteredGraph.links).join("line")
-                .attr("x1", d => (d.source.x || 0) * sc + ox).attr("y1", d => (d.source.y || 0) * sc + oy)
-                .attr("x2", d => (d.target.x || 0) * sc + ox).attr("y2", d => (d.target.y || 0) * sc + oy)
-                .attr("stroke", "#2d4a6a").attr("stroke-width", .5);
-            msvg.append("g").selectAll("circle").data(S.filteredGraph.nodes).join("circle")
-                .attr("cx", d => (d.x || 0) * sc + ox).attr("cy", d => (d.y || 0) * sc + oy)
-                .attr("r", d => Math.max(1.5, getR(d) * sc * .4))
-                .attr("fill", d => NODE_COLORS[d.type] || "#94a3b8");
-            const t = S.transform;
-            const vx = (-t.x / t.k) * sc + ox, vy = (-t.y / t.k) * sc + oy, vw = (W / t.k) * sc, vh = (H / t.k) * sc;
-            msvg.append("rect").attr("class", "mm-vp").attr("x", vx).attr("y", vy).attr("width", vw).attr("height", vh);
-        }
+        // ─── Minimap removed ───────────────────────────────────────────────────────────
+        function updateMM() { }
 
         // ─── Tooltip ──────────────────────────────────────────────────────────────────
         function showTT(ev, html) { ttEl.style.opacity = 1; ttEl.innerHTML = html; moveTT(ev); }
@@ -1868,6 +1819,51 @@
                 `<div class="dp-row"><span class="dp-key">${k}</span><span class="dp-val">${v}</span></div>`;
         }
 
+
+        function buildNodeSummary(n) {
+            if (!S.filteredGraph) return "";
+            const nm = new Map(S.filteredGraph.nodes.map(x => [x.id, x]));
+            const edges = S.filteredGraph.links.filter(l => {
+                const s = typeof l.source === "object" ? l.source.id : l.source;
+                const t = typeof l.target === "object" ? l.target.id : l.target;
+                return s === n.id || t === n.id;
+            });
+            if (!edges.length) return "";
+            const nb = { gene: [], drug: [], variant: [], disease: [] };
+            edges.forEach(l => {
+                const s = typeof l.source === "object" ? l.source.id : l.source;
+                const t = typeof l.target === "object" ? l.target.id : l.target;
+                const other = nm.get(s === n.id ? t : s);
+                if (other && nb[other.type] !== undefined) nb[other.type].push(other.label);
+            });
+            const fmt = (arr, max = 3) => {
+                const u = [...new Set(arr)];
+                const shown = u.slice(0, max);
+                const rest = u.length - shown.length;
+                return shown.map(x => "<strong>" + x + "</strong>").join(", ") + (rest > 0 ? " and " + rest + " more" : "");
+            };
+            const parts = [];
+            if (n.type === "gene") {
+                if (nb.drug.length) parts.push("The gene <strong>" + n.label + "</strong> interacts with " + (nb.drug.length === 1 ? "drug" : "drugs") + " including " + fmt(nb.drug) + ".");
+                if (nb.disease.length) parts.push("It is associated with " + (nb.disease.length === 1 ? "disease" : "diseases") + " such as " + fmt(nb.disease) + ".");
+                if (nb.variant.length) parts.push("Known variants include " + fmt(nb.variant) + ".");
+            } else if (n.type === "disease") {
+                if (nb.gene.length) parts.push("<strong>" + n.label + "</strong> is linked to " + (nb.gene.length === 1 ? "gene" : "genes") + " " + fmt(nb.gene) + ".");
+                if (nb.variant.length) parts.push("Relevant variants include " + fmt(nb.variant) + ".");
+                if (nb.drug.length) parts.push("Associated drugs: " + fmt(nb.drug) + ".");
+            } else if (n.type === "drug") {
+                if (nb.gene.length) parts.push("<strong>" + n.label + "</strong> interacts with " + (nb.gene.length === 1 ? "gene" : "genes") + " " + fmt(nb.gene) + ".");
+                if (nb.variant.length) parts.push("Variants affecting metabolism: " + fmt(nb.variant) + ".");
+                if (nb.disease.length) parts.push("Disease contexts: " + fmt(nb.disease) + ".");
+            } else if (n.type === "variant") {
+                if (nb.gene.length) parts.push("Variant <strong>" + n.label + "</strong> is located in or near " + fmt(nb.gene) + ".");
+                if (nb.disease.length) parts.push("It has been associated with " + fmt(nb.disease) + ".");
+                if (nb.drug.length) parts.push("Drug relevance: " + fmt(nb.drug) + ".");
+            }
+            if (!parts.length) return "";
+            return '<div style="background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.2);border-radius:var(--r);padding:11px 13px;margin-bottom:14px"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid rgba(56,189,248,0.15)">At a glance</div><div style="font-size:12px;color:var(--text);line-height:1.75">' + parts.join(" ") + '</div></div>';
+        }
+
         function buildNodePanel(n) {
             const c = NODE_COLORS[n.type] || "#94a3b8";
             const bcls = { gene: "b-gene", drug: "b-drug", variant: "b-var", disease: "b-dis" }[n.type] || "";
@@ -1889,7 +1885,7 @@
                 predHtml = `<div class="predict-section"><div class="predict-empty">No predictions for this node</div></div>`;
             }
 
-            return title + `
+            return title + buildNodeSummary(n) + `
   <div class="dp-section">
     <div class="dp-section-title">Identity</div>
     ${row("Label", n.label)}${row("Type", n.type)}${row("Layer", n.layer)}
@@ -2203,7 +2199,7 @@
                 document.querySelectorAll(".lbtn").forEach(b => b.classList.toggle("active", b === btn));
                 const pgx = S.activeLayer !== "base";
                 pgxFilters.style.display = pgx ? "flex" : "none"; pgxSep.style.display = pgx ? "block" : "none";
-                if (pgx && !S.pharmGraph) loadPharmGKB(); else { S.selectedNode = null; applyFilters(); }
+                if (pgx && !S.pharmGraph) loadPharmGKB(); else { S.selectedNode = null; hideLanding(); applyFilters(); }
                 setStatus(`Layer: ${S.activeLayer}`);
             });
         });
@@ -2214,6 +2210,7 @@
         if (hpc) hpc.addEventListener("change", () => { S.filters.hidePop = hpc.checked; applyFilters(); });
 
         // ─── Reset ────────────────────────────────────────────────────────────────────
+        document.getElementById("brandLogo").addEventListener("click", () => resetBtn.click());
         resetBtn.addEventListener("click", () => {
             searchInput.value = ""; S.selectedNode = null; S.selectedEdge = null; S.browseType = null;
             S.nodePositions.clear(); S.predictResults = null; predictBtn.disabled = true;
