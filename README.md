@@ -1,7 +1,5 @@
 # PharmGraph  
-### A Pharmacogenomics Knowledge Graph & Clinical Analytics Platform  
-
------
+A Pharmacogenomics Knowledge Graph & Clinical Analytics Platform  
 
 ## DESCRIPTION  
 
@@ -18,15 +16,13 @@ PharmGraph enables:
 
 Overall, PharmGraph functions as both an exploratory tool and a predictive system for discovering clinically relevant relationships beyond curated databases.
 
----
-
 ## PRERQUISITES
 
-|Tool|Version|
-|git||
-|python||
+| Tool   | Version (recommended) |
+|--------|------------------------|
+| Git    | 2.30+                  |
+| Python | 3.8 or higher          |
 
----
 
 ## INSTALLATION  
 
@@ -35,15 +31,13 @@ Overall, PharmGraph functions as both an exploratory tool and a predictive syste
 git clone https://github.com/venkat-aruna/pharmgraph.git
 python -m http.server 8000
 ```
+
 ### 2. Local host website
 Go to your local browser and and tye the url (http://localhost:8000/)
 
----
 ## NOTES
 
 PharmGraph is a research-oriented system for integrating pharmacogenomic knowledge into a unified graph-based framework. It supports exploration, interpretation, and prediction of drug–gene relationships.
-
----
 
 ## Future improvements
 
@@ -51,5 +45,3 @@ Expanding population coverage for underrepresented groups
 Improving ML prediction accuracy and expand to edges other than genes-drug 
 Enhancing clinical decision-support capabilities
 Increasing dataset completeness and graph connectivity
-
----
