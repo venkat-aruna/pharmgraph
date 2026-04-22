@@ -1082,6 +1082,8 @@
                 title="Select a gene or variant node, then click to predict drug-gene interactions">⚡ Run
                 Prediction</button>
             <button class="icon-btn" id="tableBtn">⊞ Browse</button>
+            <button class="icon-btn" id="backBtn" disabled style="opacity:0.4" title="Go back to previous view">←
+                Back</button>
             <button class="icon-btn" id="resetBtn">↺ Reset</button>
         </div>
 
@@ -1189,7 +1191,7 @@
             <div class="canvas-wrap">
                 <svg id="graph"></svg>
 
-                <div class="browse-landing" id="browseLanding">
+                <div class="browse-landing hidden" id="browseLanding">
                     <div class="landing-title">Where do you want to <strong>start?</strong></div>
                     <div class="landing-subtitle">Select an entity type above to browse the knowledge graph, or search
                         for a specific gene, drug, variant or disease.</div>
@@ -1326,7 +1328,7 @@
         // ─── State ─────────────────────────────────────────────────────────────────
         const S = {
             rawGraph: null, pharmGraph: null, predGraph: null, filteredGraph: null,
-            selectedNode: null, selectedEdge: null,
+            selectedNode: null, selectedNodes: new Set(), selectedEdge: null,
             sim: null, zoomB: null, transform: d3.zoomIdentity,
             activeLayer: "base",
             browseType: null,
@@ -1366,6 +1368,7 @@
         const sNodes = document.getElementById("sNodes");
         const sEdges = document.getElementById("sEdges");
         const resetBtn = document.getElementById("resetBtn");
+        const backBtn = document.getElementById("backBtn");
         const predictBtn = document.getElementById("predictBtn");
         const gwasChk = document.getElementById("gwasChk");
         // FIX: was referencing a wrong ID "hidePopCheck" — now consistently "hidePopChk"
@@ -1557,9 +1560,18 @@
         document.querySelectorAll(".epill,.landing-card").forEach(el => {
             el.addEventListener("click", () => {
                 const t = el.dataset.type;
+                // If nodes are selected, pills act as neighbor-type filters
+                if (S.selectedNodes.size > 0 && !el.classList.contains("landing-card")) {
+                    S.browseType = (S.browseType === t) ? null : t;
+                    document.querySelectorAll(".epill").forEach(p => p.classList.toggle("active", p.dataset.type === S.browseType));
+                    applyFilters();
+                    setStatus(S.browseType ? `Showing: ${S.browseType} neighbors of selected node(s)` : `Showing: all neighbors`);
+                    return;
+                }
                 S.browseType = (S.browseType === t && !el.classList.contains("landing-card")) ? null : t;
                 document.querySelectorAll(".epill").forEach(p => p.classList.toggle("active", p.dataset.type === S.browseType));
                 S.selectedNode = null;
+                S.selectedNodes.clear();
                 searchInput.value = "";
                 if (S.browseType) {
                     hideLanding(); applyFilters();
@@ -1567,11 +1579,17 @@
                 } else {
                     showLanding();
                 }
+                updateBackBtn();
             });
         });
 
-        function showLanding() { landingEl.classList.remove("hidden"); svgEl.selectAll("*").remove(); }
-        function hideLanding() { landingEl.classList.add("hidden"); }
+        function updateBackBtn() {
+            const canGoBack = S.selectedNodes.size > 0 || S.browseType !== null;
+            backBtn.disabled = !canGoBack;
+            backBtn.style.opacity = canGoBack ? "1" : "0.4";
+        }
+        function showLanding() { landingEl.classList.remove("hidden"); svgEl.selectAll("*").remove(); updateBackBtn(); }
+        function hideLanding() { landingEl.classList.add("hidden"); updateBackBtn(); }
 
         // ─── Autocomplete ─────────────────────────────────────────────────────────
         function buildAC(kw) {
@@ -1589,17 +1607,20 @@
                 item.innerHTML = `<span class="ac-lbl">${n.label}</span><span class="ac-type" style="background:${c}22;color:${c}">${n.type}</span>`;
                 item.addEventListener("mousedown", e => {
                     e.preventDefault(); searchInput.value = n.label; acListEl.classList.remove("open");
-                    S.selectedNode = n.id; S.browseType = null;
+                    S._prevBrowseType = S.browseType; S.browseType = null;
+                    S.selectedNodes.clear(); S.selectedNodes.add(n.id);
+                    S.selectedNode = n.id;
                     document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
                     hideLanding(); applyFilters(); setStatus(`Focused: ${n.label}`);
+                    updateBackBtn();
                 });
                 acListEl.appendChild(item);
             });
             acListEl.classList.add("open");
         }
 
-        searchInput.addEventListener("input", () => { S.selectedNode = null; buildAC(searchInput.value.trim()); hideLanding(); applyFilters(); });
-        searchInput.addEventListener("keydown", e => { if (e.key === "Escape") { searchInput.value = ""; acListEl.classList.remove("open"); S.selectedNode = null; showLanding(); } });
+        searchInput.addEventListener("input", () => { S.selectedNode = null; S.selectedNodes.clear(); buildAC(searchInput.value.trim()); hideLanding(); applyFilters(); updateBackBtn(); });
+        searchInput.addEventListener("keydown", e => { if (e.key === "Escape") { searchInput.value = ""; acListEl.classList.remove("open"); S.selectedNode = null; S.selectedNodes.clear(); showLanding(); updateBackBtn(); } });
         document.addEventListener("mousedown", e => { if (!searchInput.closest(".search-wrap").contains(e.target)) acListEl.classList.remove("open"); });
 
         // ─── Filter pipeline ──────────────────────────────────────────────────────
@@ -1649,7 +1670,7 @@
 
             let nodes = [], allowedIds = new Set();
 
-            if (S.browseType && !S.selectedNode && !kw) {
+            if (S.browseType && S.selectedNodes.size === 0 && !kw) {
                 const seedNodes = ag.nodes.filter(n => n.type === S.browseType);
                 const seedIds = new Set(seedNodes.map(n => n.id));
                 allowedIds = new Set(seedIds);
@@ -1659,11 +1680,20 @@
                 });
                 nodes = ag.nodes.filter(n => allowedIds.has(n.id));
                 links = links.filter(l => allowedIds.has(l.source) && allowedIds.has(l.target));
-            } else if (S.selectedNode && rnm.has(S.selectedNode)) {
-                const fid = S.selectedNode;
-                const nl = links.filter(l => l.source === fid || l.target === fid);
-                allowedIds = new Set([fid]); nl.forEach(l => { allowedIds.add(l.source); allowedIds.add(l.target); });
-                links = nl; nodes = ag.nodes.filter(n => allowedIds.has(n.id));
+            } else if (S.selectedNodes.size > 0) {
+                // Show union of all selected nodes' neighborhoods
+                const fids = S.selectedNodes;
+                allowedIds = new Set(fids);
+                const nl = links.filter(l => fids.has(l.source) || fids.has(l.target));
+                nl.forEach(l => { allowedIds.add(l.source); allowedIds.add(l.target); });
+                links = links.filter(l => allowedIds.has(l.source) && allowedIds.has(l.target));
+                nodes = ag.nodes.filter(n => allowedIds.has(n.id));
+                // If a type filter pill is active, filter neighbors to that type (keep all selected nodes)
+                if (S.browseType) {
+                    nodes = nodes.filter(n => fids.has(n.id) || n.type === S.browseType);
+                    const nids = new Set(nodes.map(n => n.id));
+                    links = links.filter(l => nids.has(l.source) && nids.has(l.target));
+                }
             } else if (kw) {
                 const matched = ag.nodes.filter(n => matchN(n, kw));
                 if (!matched.length) { nodes = []; links = []; }
@@ -1690,7 +1720,7 @@
                 links.forEach(l => { dm.set(l.source, (dm.get(l.source) || 0) + 1); dm.set(l.target, (dm.get(l.target) || 0) + 1); });
                 const sorted = [...nodes].sort((a, b) => (dm.get(b.id) || 0) - (dm.get(a.id) || 0));
                 const hc = Math.min(50, Math.floor(f.maxNodes * .25));
-                const keep = new Set(); if (S.selectedNode) keep.add(S.selectedNode);
+                const keep = new Set(); S.selectedNodes.forEach(id => keep.add(id));
                 sorted.slice(0, hc).forEach(n => keep.add(n.id));
                 links.forEach(l => {
                     if (keep.has(l.source) && keep.size < f.maxNodes) keep.add(l.target);
@@ -1714,6 +1744,7 @@
 
             drawGraph();
             refreshTable();
+            updateBackBtn();
         }
 
         function matchN(n, kw) {
@@ -1801,7 +1832,7 @@
 
             nodeSel.each(function (d) {
                 const g = d3.select(this), r = getR(d), c = NODE_COLORS[d.type] || "#94a3b8";
-                const sel = d.id === S.selectedNode;
+                const sel = S.selectedNodes.has(d.id);
                 const path = shapePath(d.type, r);
                 const el = path ? g.append("path").attr("d", path) : g.append("circle").attr("r", r);
                 el.attr("fill", c).attr("stroke", sel ? "#fff" : "rgba(0,0,0,.35)").attr("stroke-width", sel ? 2.5 : 1.2);
@@ -1820,12 +1851,35 @@
             nodeSel
                 .on("mouseover", (ev, d) => { showTT(ev, nodeTT(d)); d3.select(ev.currentTarget).select("circle,path").attr("stroke", "#fff").attr("stroke-width", 2); })
                 .on("mousemove", moveTT)
-                .on("mouseout", (ev, d) => { hideTT(); const sel = d.id === S.selectedNode; d3.select(ev.currentTarget).select("circle,path").attr("stroke", sel ? "#fff" : "rgba(0,0,0,.35)").attr("stroke-width", sel ? 2.5 : 1.2); })
+                .on("mouseout", (ev, d) => { hideTT(); const sel = S.selectedNodes.has(d.id); d3.select(ev.currentTarget).select("circle,path").attr("stroke", sel ? "#fff" : "rgba(0,0,0,.35)").attr("stroke-width", sel ? 2.5 : 1.2); })
                 .on("click", (ev, d) => {
-                    ev.stopPropagation(); S.selectedNode = d.id; S.selectedEdge = null;
-                    searchInput.value = d.label; predictBtn.disabled = false;
-                    applyFilters(); setStatus(`Focused: ${d.label}`);
-                    openPanel(buildNodePanel(d));
+                    ev.stopPropagation();
+                    S._prevBrowseType = S.browseType;
+                    S.browseType = null;
+                    S.selectedEdge = null;
+                    // Toggle: click again to deselect, or add to selection
+                    if (S.selectedNodes.has(d.id)) {
+                        S.selectedNodes.delete(d.id);
+                    } else {
+                        S.selectedNodes.add(d.id);
+                    }
+                    S.selectedNode = d.id; // keep for panel/predict compat
+                    predictBtn.disabled = S.selectedNodes.size === 0;
+                    document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
+                    hideLanding(); applyFilters();
+                    if (S.selectedNodes.size > 1) {
+                        setStatus(`${S.selectedNodes.size} nodes selected — showing combined neighborhood`);
+                        openPanel(buildNodePanel(d));
+                    } else if (S.selectedNodes.size === 1) {
+                        searchInput.value = d.label;
+                        setStatus(`Focused: ${d.label}`);
+                        openPanel(buildNodePanel(d));
+                    } else {
+                        S.selectedNode = null;
+                        setStatus("Selection cleared");
+                        closePanel();
+                    }
+                    updateBackBtn();
                 });
 
             svgEl.on("click", () => { closePanel(); });
@@ -2047,7 +2101,12 @@ ${predHtml}`;
         function refreshTable() {
             if (!S.rawGraph || !tableDrawer.classList.contains("open")) return;
             const ag = activeGraph();
-            tableData = ag.nodes.filter(n => n.type === S.tableTab);
+            if (S.selectedNodes.size > 0 && S.filteredGraph) {
+                // Show only nodes visible in the current filtered graph
+                tableData = S.filteredGraph.nodes.filter(n => n.type === S.tableTab);
+            } else {
+                tableData = ag.nodes.filter(n => n.type === S.tableTab);
+            }
             renderTable();
         }
 
@@ -2078,10 +2137,12 @@ ${predHtml}`;
             tableBody.querySelectorAll("tr").forEach(tr => {
                 tr.addEventListener("click", () => {
                     const id = tr.dataset.id; if (!id) return;
+                    S.selectedNodes.clear(); S.selectedNodes.add(id);
                     S.selectedNode = id; S.browseType = null;
                     document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
                     const ag = activeGraph(); const n = ag.nodes.find(x => x.id === id);
                     if (n) { searchInput.value = n.label; hideLanding(); applyFilters(); setStatus(`Focused: ${n.label}`); }
+                    updateBackBtn();
                 });
             });
         }
@@ -2261,10 +2322,38 @@ ${predHtml}`;
         // FIX: hidePopChk is now reliably resolved above
         if (hidePopChk) hidePopChk.addEventListener("change", () => { S.filters.hidePop = hidePopChk.checked; applyFilters(); });
 
+        // ─── Back ─────────────────────────────────────────────────────────────────
+        backBtn.addEventListener("click", () => {
+            if (S.selectedNodes.size > 0) {
+                // If multiple selected, first press deselects all but goes back to browse view
+                S.selectedNodes.clear();
+                S.selectedNode = null;
+                searchInput.value = "";
+                S.browseType = S._prevBrowseType || null;
+                document.querySelectorAll(".epill").forEach(p => p.classList.toggle("active", p.dataset.type === S.browseType));
+                closePanel();
+                if (S.browseType) {
+                    hideLanding(); applyFilters();
+                    setStatus(`Showing: ${S.browseType} nodes and connections`);
+                } else {
+                    showLanding();
+                }
+                updateBackBtn();
+            } else if (S.browseType) {
+                S.browseType = null;
+                document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
+                showLanding();
+                updateBackBtn();
+            } else {
+                showLanding();
+                updateBackBtn();
+            }
+        });
+
         // ─── Reset ────────────────────────────────────────────────────────────────
         document.getElementById("brandLogo").addEventListener("click", () => resetBtn.click());
         resetBtn.addEventListener("click", () => {
-            searchInput.value = ""; S.selectedNode = null; S.selectedEdge = null; S.browseType = null;
+            searchInput.value = ""; S.selectedNode = null; S.selectedNodes.clear(); S.selectedEdge = null; S.browseType = null; S._prevBrowseType = null;
             S.nodePositions.clear(); S.predictResults = null; predictBtn.disabled = true;
             S.activeLayer = "base";
             S.filters = { edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all", association: "all", maxNodes: 200, pgxEvidence: "all", phenotype: "all", population: "all", gwasOnly: false, hidePop: true, predGene: "all", predDrug: "all", predMinScore: 0, showPredOnly: false };
