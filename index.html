@@ -7,8 +7,6 @@
     <title>PharmGraph</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
-
         *,
         *::before,
         *::after {
@@ -18,30 +16,30 @@
         }
 
         :root {
-            --bg: #060d1a;
-            --surface: #0d1b2e;
-            --surface2: #0f2035;
-            --surface3: #142845;
-            --border: #1e3a5f;
-            --border2: #2d5580;
-            --text: #cdd9e5;
-            --dim: #5c7a9a;
-            --dim2: #3d5a7a;
-            --accent: #38bdf8;
-            --accent2: #0ea5e9;
-            --gene: #f59e0b;
-            --drug: #38bdf8;
-            --variant: #a78bfa;
-            --disease: #f87171;
-            --pop: #34d399;
-            --gwas: #c084fc;
-            --predict: #fb923c;
+            --bg: #141414;
+            --surface: #1c1c1c;
+            --surface2: #242424;
+            --surface3: #2c2c2c;
+            --border: #383838;
+            --border2: #4a4a4a;
+            --text: #e8e3dc;
+            --dim: #7a7268;
+            --dim2: #554f48;
+            --accent: #c8965a;
+            --accent2: #b07840;
+            --gene: #e8a830;
+            --drug: #5b9bd5;
+            --variant: #9b7fd4;
+            --disease: #c85a5a;
+            --pop: #4ea87a;
+            --gwas: #9b6bc4;
+            --predict: #d4713a;
             --r: 8px;
             --r2: 12px;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
             height: 100vh;
@@ -49,14 +47,12 @@
             font-size: 13px
         }
 
-        /* ── App shell ── */
         .app {
             display: grid;
             grid-template-rows: auto auto 1fr auto;
             height: 100vh
         }
 
-        /* ── Top bar ── */
         .topbar {
             display: flex;
             align-items: center;
@@ -70,7 +66,7 @@
         }
 
         .brand {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             font-size: 14px;
             font-weight: 600;
             color: var(--accent);
@@ -163,7 +159,7 @@
             font-size: 9px;
             padding: 1px 5px;
             border-radius: 4px;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             text-transform: uppercase
         }
 
@@ -180,7 +176,7 @@
             background: var(--surface2);
             color: var(--dim);
             font-size: 11px;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             cursor: pointer;
             transition: .15s;
             white-space: nowrap
@@ -192,6 +188,13 @@
             color: var(--accent)
         }
 
+        /* Prediction layer button gets its own active colour */
+        .lbtn[data-layer="predictions"].active {
+            background: #2d1500;
+            border-color: var(--predict);
+            color: var(--predict)
+        }
+
         .lbtn:hover:not(.active) {
             color: var(--text);
             border-color: var(--border2)
@@ -200,7 +203,7 @@
         .top-stats {
             font-size: 11px;
             color: var(--dim);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             white-space: nowrap;
             margin-left: auto
         }
@@ -249,7 +252,6 @@
             cursor: not-allowed
         }
 
-        /* ── Browse / Filter bar ── */
         .browsebar {
             display: flex;
             align-items: center;
@@ -297,7 +299,6 @@
             color: var(--text)
         }
 
-        /* Combobox */
         .combo {
             position: relative;
             min-width: 120px
@@ -365,7 +366,6 @@
             color: var(--accent)
         }
 
-        /* Browse entity pills */
         .entity-pills {
             display: flex;
             gap: 6px;
@@ -382,7 +382,7 @@
             font-size: 11px;
             cursor: pointer;
             transition: .15s;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             font-weight: 600
         }
 
@@ -414,10 +414,6 @@
             background: #200a0a
         }
 
-        .epill.active {
-            opacity: 1
-        }
-
         .epill.gene.active {
             background: #2d1800
         }
@@ -434,7 +430,6 @@
             background: #3a0f0f
         }
 
-        /* ── Main content area ── */
         .content-row {
             display: flex;
             flex: 1;
@@ -442,7 +437,6 @@
             min-height: 0
         }
 
-        /* ── Graph canvas ── */
         .canvas-wrap {
             flex: 1;
             position: relative;
@@ -456,7 +450,6 @@
             display: block
         }
 
-        /* ── Browse landing ── */
         .browse-landing {
             position: absolute;
             inset: 0;
@@ -533,7 +526,6 @@
             line-height: 1.5
         }
 
-        /* ── Right detail panel ── */
         .detail-panel {
             width: 0;
             background: var(--surface);
@@ -634,7 +626,7 @@
             padding: 1px 6px;
             border-radius: 4px;
             font-size: 9px;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             font-weight: 600;
             line-height: 1.5
         }
@@ -674,7 +666,6 @@
             color: var(--disease)
         }
 
-        /* Prediction section in panel */
         .predict-section {
             background: var(--surface2);
             border: 1px solid #3d2000;
@@ -710,7 +701,7 @@
         }
 
         .pr-score {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             font-size: 10px;
             color: var(--predict)
         }
@@ -756,7 +747,6 @@
             }
         }
 
-        /* Freq bars */
         .freq-grid {
             display: grid;
             grid-template-columns: 30px 1fr 34px;
@@ -768,7 +758,7 @@
         .fc {
             font-size: 9px;
             color: var(--dim);
-            font-family: 'IBM Plex Mono', monospace
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace
         }
 
         .fb-bg {
@@ -788,10 +778,9 @@
             font-size: 9px;
             color: var(--text);
             text-align: right;
-            font-family: 'IBM Plex Mono', monospace
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace
         }
 
-        /* ── Table drawer ── */
         .table-drawer {
             flex-shrink: 0;
             background: var(--surface);
@@ -821,7 +810,7 @@
             border-bottom: 2px solid transparent;
             transition: .15s;
             white-space: nowrap;
-            font-family: 'IBM Plex Mono', monospace
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace
         }
 
         .td-tab.active {
@@ -921,11 +910,10 @@
         }
 
         tbody td.mono {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             font-size: 10px
         }
 
-        /* ── Graph overlays ── */
         .legend {
             position: absolute;
             top: 12px;
@@ -975,7 +963,7 @@
             color: var(--dim);
             z-index: 20;
             pointer-events: none;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
             max-width: 480px;
             text-align: center;
             white-space: nowrap
@@ -995,9 +983,6 @@
             padding: 40px
         }
 
-
-
-        /* Tooltip */
         #tooltip {
             position: fixed;
             pointer-events: none;
@@ -1026,7 +1011,6 @@
             color: var(--dim)
         }
 
-        /* Predicted glow on nodes */
         .predicted-glow {
             animation: glow-pulse 1.8s ease-in-out infinite
         }
@@ -1043,7 +1027,6 @@
             }
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 4px
         }
@@ -1055,6 +1038,18 @@
         ::-webkit-scrollbar-thumb {
             background: var(--border);
             border-radius: 2px
+        }
+
+        /* Filter section visibility helper */
+        .filter-section {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .filter-section.visible {
+            display: flex
         }
     </style>
 </head>
@@ -1073,17 +1068,19 @@
                 <div class="ac-list" id="acList"></div>
             </div>
 
+            <!-- FIX: Added "predictions" as its own distinct layer button -->
             <div class="layer-btns">
                 <button class="lbtn active" data-layer="base">Core</button>
                 <button class="lbtn" data-layer="pharmgkb">PharmGKB</button>
                 <button class="lbtn" data-layer="both">Both</button>
+                <button class="lbtn" data-layer="predictions">⚡ Predictions</button>
             </div>
 
             <div class="top-stats">nodes <span id="sNodes">0</span> &nbsp;|&nbsp; edges <span id="sEdges">0</span></div>
 
             <button class="icon-btn predict-btn" id="predictBtn" disabled
-                title="Select a gene or variant node, then click to predict drug-gene interactions">⚡ Predict
-                interactions</button>
+                title="Select a gene or variant node, then click to predict drug-gene interactions">⚡ Run
+                Prediction</button>
             <button class="icon-btn" id="tableBtn">⊞ Browse</button>
             <button class="icon-btn" id="resetBtn">↺ Reset</button>
         </div>
@@ -1127,8 +1124,9 @@
                 <div class="combo-list"></div>
             </div>
 
+            <!-- PGx filters: only visible when layer = pharmgkb or both -->
             <div class="sep" id="pgxSep" style="display:none"></div>
-            <div id="pgxFilters" style="display:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div id="pgxFilters" class="filter-section">
                 <span class="bar-label" style="color:var(--variant)">PGx</span>
                 <div class="combo" id="cPgxEv" data-ph="PGx Evidence">
                     <input type="text" readonly placeholder="PGx Evidence" />
@@ -1149,6 +1147,33 @@
                 <label class="check-lbl"><input type="checkbox" id="hidePopChk" checked> Hide pop</label>
             </div>
 
+            <!-- FIX: Prediction filters: only visible when layer = predictions -->
+            <div class="sep" id="predSep" style="display:none"></div>
+            <div id="predFilters" class="filter-section">
+                <span class="bar-label" style="color:var(--predict)">⚡ Pred</span>
+                <div class="combo" id="cPredGene" data-ph="Gene">
+                    <input type="text" placeholder="Gene" />
+                    <span class="combo-arr">▾</span>
+                    <div class="combo-list"></div>
+                </div>
+                <div class="combo" id="cPredDrug" data-ph="Drug">
+                    <input type="text" placeholder="Drug" />
+                    <span class="combo-arr">▾</span>
+                    <div class="combo-list"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+                    <span style="font-size:11px;color:var(--dim);white-space:nowrap">Min score</span>
+                    <input type="range" id="predScoreSlider" min="0" max="100" value="0"
+                        style="width:80px;accent-color:var(--predict);cursor:pointer"
+                        title="Minimum prediction score threshold" />
+                    <span id="predScoreVal"
+                        style="font-size:10px;color:var(--predict);font-family:'SF Mono','Cascadia Code','Consolas','Courier New',monospace;min-width:36px">0%</span>
+                </div>
+                <label class="check-lbl">
+                    <input type="checkbox" id="showPredOnlyChk"> Predictions only
+                </label>
+            </div>
+
             <div class="sep"></div>
             <div class="combo" id="cMax" data-ph="Max nodes" style="min-width:100px">
                 <input type="text" readonly placeholder="Max nodes" />
@@ -1164,7 +1189,6 @@
             <div class="canvas-wrap">
                 <svg id="graph"></svg>
 
-                <!-- Browse landing -->
                 <div class="browse-landing" id="browseLanding">
                     <div class="landing-title">Where do you want to <strong>start?</strong></div>
                     <div class="landing-subtitle">Select an entity type above to browse the knowledge graph, or search
@@ -1193,10 +1217,8 @@
                     </div>
                 </div>
 
-                <!-- Center overlay -->
                 <div class="center-overlay" id="centerOverlay"></div>
 
-                <!-- Legend -->
                 <div class="legend">
                     <div class="legend-title">Node types</div>
                     <div class="legend-row">
@@ -1232,15 +1254,12 @@
                                 style="width:16px;height:2px;background:#c084fc;display:inline-block;margin-right:8px"></span><span>GWAS
                                 sig</span></div>
                         <div class="legend-row"><span
-                                style="width:16px;height:2px;background:#fb923c;stroke-dasharray:3,2;display:inline-block;margin-right:8px"></span><span>Predicted</span>
+                                style="width:16px;height:2px;background:#fb923c;display:inline-block;margin-right:8px"></span><span>Predicted</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Status -->
                 <div class="statusbar" id="statusbar">Loading graph…</div>
-
-                <!-- Tooltip -->
                 <div id="tooltip"></div>
             </div>
 
@@ -1278,13 +1297,13 @@
     </div><!-- .app -->
 
     <script>
-        // ─── Constants ───────────────────────────────────────────────────────────────
+        // ─── Constants ─────────────────────────────────────────────────────────────
         const NODE_COLORS = { gene: "#f59e0b", drug: "#38bdf8", variant: "#a78bfa", disease: "#f87171", population: "#34d399" };
         const NODE_SHAPES = { gene: "circle", drug: "rect", variant: "tri", disease: "diamond", population: "diamond" };
         const EV_ORDER = { "1A": 0, "1B": 1, "2A": 2, "2B": 3, "3": 4, "4": 5 };
         const POP_LABELS = { afr: "African/Afr. Am.", amr: "Admixed American", asj: "Ashkenazi Jewish", eas: "East Asian", fin: "Finnish", mid: "Middle Eastern", nfe: "Non-Finn. European", oth: "Other", sas: "South Asian" };
-        const PREDICT_URL = "http://localhost:5000/predict";  // ← set this when your model is ready
-        const PREDICT_MOCK = true;   // ← set to false once your Flask/FastAPI server is running
+        const PREDICT_URL = "http://localhost:5000/predict";
+        const PREDICT_MOCK = true;  // set to false once your Flask/FastAPI server is running
 
         const DISEASE_GROUPS = {
             Anemia: ["anemia", "anaemia", "hemolytic", "haemolytic", "sickle", "thalassemia"],
@@ -1304,15 +1323,15 @@
             return null;
         }
 
-        // ─── State ───────────────────────────────────────────────────────────────────
+        // ─── State ─────────────────────────────────────────────────────────────────
         const S = {
-            rawGraph: null, pharmGraph: null, filteredGraph: null,
+            rawGraph: null, pharmGraph: null, predGraph: null, filteredGraph: null,
             selectedNode: null, selectedEdge: null,
             sim: null, zoomB: null, transform: d3.zoomIdentity,
             activeLayer: "base",
-            browseType: null,      // "disease"|"gene"|"drug"|"variant" — active pill
+            browseType: null,
             nodePositions: new Map(),
-            predictResults: null,  // {nodeId → [{label,score}]}
+            predictResults: null,
             tableTab: "gene",
             tableSortCol: null, tableSortDir: 1,
             filters: {
@@ -1320,10 +1339,13 @@
                 association: "all", maxNodes: 200,
                 pgxEvidence: "all", phenotype: "all", population: "all",
                 gwasOnly: false, hidePop: true,
+                predGene: "all", predDrug: "all",
+                predMinScore: 0,
+                showPredOnly: false,
             }
         };
 
-        // ─── DOM ─────────────────────────────────────────────────────────────────────
+        // ─── DOM ──────────────────────────────────────────────────────────────────
         const svgEl = d3.select("#graph");
         const ttEl = document.getElementById("tooltip");
         const statusEl = document.getElementById("statusbar");
@@ -1346,18 +1368,24 @@
         const resetBtn = document.getElementById("resetBtn");
         const predictBtn = document.getElementById("predictBtn");
         const gwasChk = document.getElementById("gwasChk");
-        const hidePopChk = document.getElementById("hidePopCheck") || document.getElementById("hidePopChk");
+        // FIX: was referencing a wrong ID "hidePopCheck" — now consistently "hidePopChk"
+        const hidePopChk = document.getElementById("hidePopChk");
         const pgxFilters = document.getElementById("pgxFilters");
         const pgxSep = document.getElementById("pgxSep");
+        const predFilters = document.getElementById("predFilters");
+        const predSep = document.getElementById("predSep");
+        const predScoreSlider = document.getElementById("predScoreSlider");
+        const predScoreVal = document.getElementById("predScoreVal");
+        const showPredOnlyChk = document.getElementById("showPredOnlyChk");
 
-        // ─── Utils ───────────────────────────────────────────────────────────────────
+        // ─── Utils ────────────────────────────────────────────────────────────────
         const clean = v => { if (v == null) return null; const s = String(v).trim(); return (s === "" || s.toLowerCase() === "nan") ? null : s; };
         const safeV = v => { if (v == null || v === "") return "—"; if (Array.isArray(v)) return v.length ? v.join(", ") : "—"; return String(v); };
         const pList = v => { if (Array.isArray(v)) return v.map(clean).filter(Boolean); const s = clean(v); if (!s) return []; return s.split("|").map(clean).filter(Boolean); };
         const uniq = a => [...new Set(a.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
         const inclCI = (arr, val) => { if (!val || val === "all") return true; const t = val.toLowerCase(); return arr.some(x => String(x).toLowerCase() === t); };
 
-        // ─── Combobox ────────────────────────────────────────────────────────────────
+        // ─── Combobox ─────────────────────────────────────────────────────────────
         const combos = new Map();
         function mkCombo(id, onChange, ro = false) {
             const w = document.getElementById(id); if (!w) return;
@@ -1390,6 +1418,8 @@
         const cPgxEv = mkCombo("cPgxEv", v => { S.filters.pgxEvidence = v; applyFilters(); }, true);
         const cPhenotype = mkCombo("cPhenotype", v => { S.filters.phenotype = v; applyFilters(); });
         const cPop = mkCombo("cPop", v => { S.filters.population = v; applyFilters(); }, true);
+        const cPredGene = mkCombo("cPredGene", v => { S.filters.predGene = v; applyFilters(); });
+        const cPredDrug = mkCombo("cPredDrug", v => { S.filters.predDrug = v; applyFilters(); });
         const cMax = mkCombo("cMax", v => { S.filters.maxNodes = v === "all" ? 99999 : Number(v); applyFilters(); }, true);
 
         cEdgeType.pop(["gene_disease", "gene_drug", "variant_gene", "variant_drug", "variant_population"]);
@@ -1398,7 +1428,19 @@
         cMax.pop(["200", "500", "1000", "2000", "5000", "Max"]);
         cMax.set("200");
 
-        // ─── Normalize graph ─────────────────────────────────────────────────────────
+        predScoreSlider.addEventListener("input", () => {
+            const pct = Number(predScoreSlider.value) / 100;
+            const score = pct === 0 ? 0 : 0.999 + pct * 0.001;
+            S.filters.predMinScore = score;
+            predScoreVal.textContent = pct === 0 ? "0%" : (score * 100).toFixed(4) + "%";
+            applyFilters();
+        });
+
+        showPredOnlyChk.addEventListener("change", () => {
+            S.filters.showPredOnly = showPredOnlyChk.checked; applyFilters();
+        });
+
+        // ─── Normalize graph ──────────────────────────────────────────────────────
         function normalize(graph) {
             const nodes = (graph.nodes || []).map(n => {
                 const t = clean(n.type || n.node_type || n.group) || "unknown";
@@ -1458,19 +1500,37 @@
             return { metadata: graph.metadata || {}, nodes, links };
         }
 
-        // ─── Active graph merge ───────────────────────────────────────────────────────
+        // ─── Active graph merge ───────────────────────────────────────────────────
+        // FIX: Now handles "predictions" layer properly, merging predGraph into the view
         function activeGraph() {
-            if (S.activeLayer === "base" || !S.pharmGraph) return S.rawGraph;
-            if (S.activeLayer === "pharmgkb") return S.pharmGraph;
+            const graphs = [];
+
+            if (S.activeLayer === "base" || S.activeLayer === "both" || S.activeLayer === "predictions") {
+                if (S.rawGraph) graphs.push(S.rawGraph);
+            }
+            if (S.activeLayer === "pharmgkb" || S.activeLayer === "both") {
+                if (S.pharmGraph) graphs.push(S.pharmGraph);
+                if (S.activeLayer === "pharmgkb" && !S.rawGraph) { } // pharmgkb-only still needs rawGraph for context
+                if (S.activeLayer === "pharmgkb" && S.rawGraph) graphs.unshift(S.rawGraph);
+            }
+            if (S.activeLayer === "predictions") {
+                if (S.predGraph) graphs.push(S.predGraph);
+            }
+
+            if (graphs.length === 0) return S.rawGraph || { nodes: [], links: [] };
+            if (graphs.length === 1) return graphs[0];
+
+            // Merge all selected graphs
             const nm = new Map();
-            (S.rawGraph.nodes || []).forEach(n => nm.set(n.id, { ...n }));
-            (S.pharmGraph.nodes || []).forEach(n => nm.set(n.id, nm.has(n.id) ? { ...nm.get(n.id), ...n } : { ...n }));
             const seen = new Set(), links = [];
-            [...(S.rawGraph.links || []), ...(S.pharmGraph.links || [])].forEach(l => { if (!seen.has(l.id)) { seen.add(l.id); links.push(l); } });
+            for (const g of graphs) {
+                (g.nodes || []).forEach(n => nm.set(n.id, nm.has(n.id) ? { ...nm.get(n.id), ...n } : { ...n }));
+                (g.links || []).forEach(l => { if (!seen.has(l.id)) { seen.add(l.id); links.push(l); } });
+            }
             return { metadata: {}, nodes: [...nm.values()], links };
         }
 
-        // ─── Populate filter combos ───────────────────────────────────────────────────
+        // ─── Populate filter combos ───────────────────────────────────────────────
         function populateCombos() {
             if (!S.rawGraph) return;
             const fam = [], dbs = [], evs = [], ascs = [], phenos = [];
@@ -1484,7 +1544,16 @@
             cGeneFamily.pop(fam); cSourceDb.pop(dbs); cEvidence.pop(evs); cAssoc.pop(ascs); cPhenotype.pop(phenos);
         }
 
-        // ─── Entity pill browse mode ──────────────────────────────────────────────────
+        // FIX: populate prediction filter combos from the loaded predGraph
+        function populatePredCombos() {
+            if (!S.predGraph) return;
+            const genes = [...new Set(S.predGraph.links.map(l => l.source_label).filter(Boolean))].sort();
+            const drugs = [...new Set(S.predGraph.links.map(l => l.target_label).filter(Boolean))].sort();
+            cPredGene.pop(genes);
+            cPredDrug.pop(drugs);
+        }
+
+        // ─── Entity pill browse mode ──────────────────────────────────────────────
         document.querySelectorAll(".epill,.landing-card").forEach(el => {
             el.addEventListener("click", () => {
                 const t = el.dataset.type;
@@ -1493,8 +1562,7 @@
                 S.selectedNode = null;
                 searchInput.value = "";
                 if (S.browseType) {
-                    hideLanding();
-                    applyFilters();
+                    hideLanding(); applyFilters();
                     setStatus(`Showing: ${S.browseType} nodes and connections`);
                 } else {
                     showLanding();
@@ -1505,7 +1573,7 @@
         function showLanding() { landingEl.classList.remove("hidden"); svgEl.selectAll("*").remove(); }
         function hideLanding() { landingEl.classList.add("hidden"); }
 
-        // ─── Autocomplete ─────────────────────────────────────────────────────────────
+        // ─── Autocomplete ─────────────────────────────────────────────────────────
         function buildAC(kw) {
             if (!S.rawGraph || !kw || kw.length < 2) { acListEl.classList.remove("open"); return; }
             const kl = kw.toLowerCase(), ag = activeGraph(), hits = [];
@@ -1529,11 +1597,12 @@
             });
             acListEl.classList.add("open");
         }
+
         searchInput.addEventListener("input", () => { S.selectedNode = null; buildAC(searchInput.value.trim()); hideLanding(); applyFilters(); });
         searchInput.addEventListener("keydown", e => { if (e.key === "Escape") { searchInput.value = ""; acListEl.classList.remove("open"); S.selectedNode = null; showLanding(); } });
         document.addEventListener("mousedown", e => { if (!searchInput.closest(".search-wrap").contains(e.target)) acListEl.classList.remove("open"); });
 
-        // ─── Filter pipeline ──────────────────────────────────────────────────────────
+        // ─── Filter pipeline ──────────────────────────────────────────────────────
         function applyFilters() {
             if (!S.rawGraph) return;
             const f = S.filters, kw = searchInput.value.trim().toLowerCase(), ag = activeGraph();
@@ -1545,6 +1614,7 @@
                 if (!inclCI(l.source_database, f.sourceDb)) return false;
                 if (!inclCI(l.evidence_level, f.evidenceLevel)) return false;
                 if (!inclCI(l.association, f.association)) return false;
+
                 if (l.layer === "pharmgkb") {
                     if (f.pgxEvidence !== "all" && !inclCI(l.evidence_level, f.pgxEvidence)) return false;
                     if (f.phenotype !== "all" && !inclCI(l.phenotype_names, f.phenotype)) return false;
@@ -1556,12 +1626,29 @@
                     }
                     if (f.hidePop && l.edge_type === "variant_population") return false;
                 }
+
+                // FIX: prediction-layer filters now only apply to predicted edges
+                if (l.layer === "predicted" || l.predicted) {
+                    const score = l.pred_prob ?? l.interaction_score_max ?? 1;
+                    if (f.predMinScore > 0 && score < f.predMinScore) return false;
+                    if (f.predGene !== "all") {
+                        const gLabel = l.source_label || "";
+                        if (gLabel.toLowerCase() !== f.predGene.toLowerCase()) return false;
+                    }
+                    if (f.predDrug !== "all") {
+                        const dLabel = l.target_label || "";
+                        if (dLabel.toLowerCase() !== f.predDrug.toLowerCase()) return false;
+                    }
+                }
+
+                // showPredOnly: hides all non-predicted edges when checked
+                if (f.showPredOnly && !(l.layer === "predicted" || l.predicted)) return false;
+
                 return true;
             });
 
             let nodes = [], allowedIds = new Set();
 
-            // Browse mode: show only selected entity type + 1-hop
             if (S.browseType && !S.selectedNode && !kw) {
                 const seedNodes = ag.nodes.filter(n => n.type === S.browseType);
                 const seedIds = new Set(seedNodes.map(n => n.id));
@@ -1616,7 +1703,7 @@
 
             const vm = new Map(); nodes.forEach(n => vm.set(n.id, 0));
             links.forEach(l => { vm.set(l.source, (vm.get(l.source) || 0) + 1); vm.set(l.target, (vm.get(l.target) || 0) + 1); });
-            const fn = nodes.map(n => ({ ...n, degree: vm.get(n.id) || 0, predicted: !!(S.predictResults && S.predictResults[n.id]) }));
+            const fn = nodes.map(n => ({ ...n, degree: vm.get(n.id) || 0, predicted: !!(S.predictResults && S.predictResults[n.id]) || n.predicted }));
 
             S.filteredGraph = { nodes: fn, links };
             sNodes.textContent = fn.length; sEdges.textContent = links.length;
@@ -1635,16 +1722,17 @@
             ].filter(Boolean).some(v => String(v).toLowerCase().includes(kw));
         }
 
-        // ─── Drawing ──────────────────────────────────────────────────────────────────
+        // ─── Drawing ──────────────────────────────────────────────────────────────
         function getR(n) { return Math.max(6, Math.min(22, 6 + (n.degree || 0) * .6)); }
         function edgeColor(l) {
-            if (l.predicted) return "#fb923c";
+            if (l.predicted || l.layer === "predicted") return "#fb923c";
             if (l.layer === "pharmgkb" && l.gwas_significant) return "#c084fc";
             if (l.edge_type === "variant_population") return "#34d399";
             return "#334155";
         }
         function edgeW(l) {
             if (l.layer === "pharmgkb") { const i = EV_ORDER[l.evidence_level?.[0]] ?? 4; return Math.max(1.2, 3.5 - i * .4); }
+            if (l.predicted || l.layer === "predicted") return 2;
             const s = l.interaction_score_max; if (s == null || isNaN(s)) return 1.4;
             return Math.max(1.4, Math.min(4.5, 1.2 + s * 2.5));
         }
@@ -1666,25 +1754,19 @@
 
             const nodes = S.filteredGraph.nodes.map(n => {
                 const p = S.nodePositions.get(n.id);
-                return {
-                    ...n, x: p?.x ?? W / 2 + (Math.random() - .5) * 220, y: p?.y ?? H / 2 + (Math.random() - .5) * 220,
-                    fx: p?.fx, fy: p?.fy
-                };
+                return { ...n, x: p?.x ?? W / 2 + (Math.random() - .5) * 220, y: p?.y ?? H / 2 + (Math.random() - .5) * 220, fx: p?.fx, fy: p?.fy };
             });
 
-            // Pin disease nodes in centre ring if browse=disease or no browse type
             const disNodes = nodes.filter(n => n.type === "disease");
             if (disNodes.length > 0 && disNodes.length <= 30) {
                 const pinned = disNodes.filter(n => !S.nodePositions.has(n.id));
-                if (pinned.length > 0) {
-                    pinned.forEach((n, i) => {
-                        const ang = (i / pinned.length) * Math.PI * 2;
-                        const rad = Math.min(W, H) * .22;
-                        n.fx = W / 2 + Math.cos(ang) * rad; n.fy = H / 2 + Math.sin(ang) * rad;
-                        n.x = n.fx; n.y = n.fy;
-                        S.nodePositions.set(n.id, { x: n.fx, y: n.fy, fx: n.fx, fy: n.fy });
-                    });
-                }
+                pinned.forEach((n, i) => {
+                    const ang = (i / pinned.length) * Math.PI * 2;
+                    const rad = Math.min(W, H) * .22;
+                    n.fx = W / 2 + Math.cos(ang) * rad; n.fy = H / 2 + Math.sin(ang) * rad;
+                    n.x = n.fx; n.y = n.fy;
+                    S.nodePositions.set(n.id, { x: n.fx, y: n.fy, fx: n.fx, fy: n.fy });
+                });
             }
 
             const links = S.filteredGraph.links.map(l => ({ ...l }));
@@ -1692,20 +1774,21 @@
             const zl = svgEl.append("g").attr("class", "zl");
 
             S.zoomB = d3.zoom().scaleExtent([.08, 8]).on("zoom", ev => {
-                S.transform = ev.transform; zl.attr("transform", ev.transform); updateMM();
+                S.transform = ev.transform; zl.attr("transform", ev.transform);
             });
             svgEl.call(S.zoomB);
 
             const linkSel = zl.append("g").selectAll("line").data(links).join("line")
                 .attr("stroke", d => edgeColor(d)).attr("stroke-width", d => edgeW(d))
-                .attr("stroke-opacity", .6).style("cursor", "pointer")
+                .attr("stroke-opacity", .6)
+                .attr("stroke-dasharray", d => (d.predicted || d.layer === "predicted") ? "5,3" : null)
+                .style("cursor", "pointer")
                 .on("mouseover", (ev, d) => {
                     d3.select(ev.currentTarget).attr("stroke-opacity", 1).attr("stroke-width", edgeW(d) + 1.5);
                     showTT(ev, edgeTT(d, nm));
                 })
-                .on("mousemove", moveTT).on("mouseout", (ev, d) => {
-                    d3.select(ev.currentTarget).attr("stroke-opacity", .6).attr("stroke-width", edgeW(d)); hideTT();
-                })
+                .on("mousemove", moveTT)
+                .on("mouseout", (ev, d) => { d3.select(ev.currentTarget).attr("stroke-opacity", .6).attr("stroke-width", edgeW(d)); hideTT(); })
                 .on("click", (ev, d) => { ev.stopPropagation(); S.selectedEdge = d; openPanel(buildEdgePanel(d, nm)); });
 
             const nodeSel = zl.append("g").selectAll("g").data(nodes).join("g")
@@ -1720,9 +1803,7 @@
                 const g = d3.select(this), r = getR(d), c = NODE_COLORS[d.type] || "#94a3b8";
                 const sel = d.id === S.selectedNode;
                 const path = shapePath(d.type, r);
-                const el = path
-                    ? g.append("path").attr("d", path)
-                    : g.append("circle").attr("r", r);
+                const el = path ? g.append("path").attr("d", path) : g.append("circle").attr("r", r);
                 el.attr("fill", c).attr("stroke", sel ? "#fff" : "rgba(0,0,0,.35)").attr("stroke-width", sel ? 2.5 : 1.2);
                 if (d.gwas_significant)
                     g.append("circle").attr("r", r + 3.5).attr("fill", "none").attr("stroke", "#c084fc").attr("stroke-width", 1.5).attr("stroke-dasharray", "3,2");
@@ -1730,8 +1811,10 @@
                     g.append("circle").attr("r", r + 5).attr("fill", "none").attr("stroke", "#fb923c").attr("stroke-width", 2).attr("class", "predicted-glow");
                 g.append("text")
                     .text(d.disease_group && d.type === "disease" ? `[${d.disease_group}] ${d.label}` : d.label)
-                    .attr("fill", "#e2e8f0").attr("font-size", Math.max(9, Math.min(13, 8 + d.degree * .15)) + "px")
-                    .attr("dx", r + 4).attr("dy", 4).style("pointer-events", "none").style("user-select", "none");
+                    .attr("fill", "#e2e8f0")
+                    .attr("font-size", Math.max(9, Math.min(13, 8 + d.degree * .15)) + "px")
+                    .attr("dx", r + 4).attr("dy", 4)
+                    .style("pointer-events", "none").style("user-select", "none");
             });
 
             nodeSel
@@ -1747,7 +1830,6 @@
 
             svgEl.on("click", () => { closePanel(); });
 
-            // Simulation
             const topHubs = [...nodes].sort((a, b) => (b.degree || 0) - (a.degree || 0)).slice(0, 6);
             const sim = d3.forceSimulation(nodes)
                 .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.edge_type === "variant_population" ? 150 : 90).strength(.25))
@@ -1758,21 +1840,16 @@
                 .on("tick", () => {
                     linkSel.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                     nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
-                    updateMM();
                 })
                 .on("end", () => {
                     topHubs.forEach(n => { if (!S.nodePositions.has(n.id)) { n.fx = n.x; n.fy = n.y; S.nodePositions.set(n.id, { x: n.x, y: n.y, fx: n.x, fy: n.y }); } });
                     nodes.forEach(n => { if (!S.nodePositions.has(n.id)) S.nodePositions.set(n.id, { x: n.x, y: n.y }); });
                     setStatus(`${S.filteredGraph.nodes.length} nodes · ${S.filteredGraph.links.length} edges`);
-                    updateMM();
                 });
             S.sim = sim;
         }
 
-        // ─── Minimap removed ───────────────────────────────────────────────────────────
-        function updateMM() { }
-
-        // ─── Tooltip ──────────────────────────────────────────────────────────────────
+        // ─── Tooltip ──────────────────────────────────────────────────────────────
         function showTT(ev, html) { ttEl.style.opacity = 1; ttEl.innerHTML = html; moveTT(ev); }
         function moveTT(ev) {
             const tw = ttEl.offsetWidth || 260, th = ttEl.offsetHeight || 100, m = 12;
@@ -1782,33 +1859,38 @@
             ttEl.style.left = x + "px"; ttEl.style.top = y + "px";
         }
         function hideTT() { ttEl.style.opacity = 0; }
+
         function nodeTT(n) {
             const c = NODE_COLORS[n.type] || "#94a3b8";
             const g = n.gwas_significant ? `<span class="badge b-gwas">GWAS✓</span> ` : "";
             const e = n.best_evidence ? `<span class="badge b-ev">${n.best_evidence}</span> ` : "";
             const grp = n.disease_group ? ` <span style="color:var(--dim);font-size:9px">[${n.disease_group}]</span>` : "";
             return `<strong style="color:${c}">${n.label}</strong>${grp}${g}${e}
-    <span class="tt-k">Type</span> ${n.type}<br>
-    ${n.gene_symbol ? `<span class="tt-k">Gene</span> ${n.gene_symbol}<br>` : ""}
-    ${n.drug_name ? `<span class="tt-k">Drug</span> ${n.drug_name}<br>` : ""}
-    <span class="tt-k">Degree</span> ${n.degree}
-    ${n.predicted ? `<br><span class="badge b-pred">⚡ Predicted</span>` : ""}`;
+<span class="tt-k">Type</span> ${n.type}<br>
+${n.gene_symbol ? `<span class="tt-k">Gene</span> ${n.gene_symbol}<br>` : ""}
+${n.drug_name ? `<span class="tt-k">Drug</span> ${n.drug_name}<br>` : ""}
+<span class="tt-k">Degree</span> ${n.degree}
+${n.predicted ? `<br><span class="badge b-pred">⚡ Predicted</span>` : ""}`;
         }
+
         function edgeTT(l, nm) {
             const src = typeof l.source === "object" ? l.source : nm.get(l.source);
             const tgt = typeof l.target === "object" ? l.target : nm.get(l.target);
             const g = l.gwas_significant ? `<span class="badge b-gwas">GWAS✓</span> ` : "";
-            return `<strong>${l.edge_type}</strong> ${g}<br>
-    <span class="tt-k">From</span> ${src?.label || "?"}<br>
-    <span class="tt-k">To</span> ${tgt?.label || "?"}<br>
-    ${l.evidence_level?.length ? `<span class="tt-k">Evidence</span> ${l.evidence_level.join(", ")}<br>` : ""}
-    ${l.best_gwas_p_value != null ? `<span class="tt-k">GWAS p</span> ${l.best_gwas_p_value.toExponential(2)}<br>` : ""}
-    ${l.allele_frequency != null ? `<span class="tt-k">Freq</span> ${(l.allele_frequency * 100).toFixed(2)}%` : ""}`;
+            const pred = (l.predicted || l.layer === "predicted") ? `<span class="badge b-pred">⚡ Predicted</span> ` : "";
+            return `<strong>${l.edge_type}</strong> ${g}${pred}<br>
+<span class="tt-k">From</span> ${src?.label || "?"}<br>
+<span class="tt-k">To</span> ${tgt?.label || "?"}<br>
+${l.evidence_level?.length ? `<span class="tt-k">Evidence</span> ${l.evidence_level.join(", ")}<br>` : ""}
+${l.best_gwas_p_value != null ? `<span class="tt-k">GWAS p</span> ${l.best_gwas_p_value.toExponential(2)}<br>` : ""}
+${l.allele_frequency != null ? `<span class="tt-k">Freq</span> ${(l.allele_frequency * 100).toFixed(2)}%` : ""}
+${l.interaction_score_max != null ? `<span class="tt-k">Score</span> ${l.interaction_score_max.toFixed(3)}` : ""}`;
         }
 
-        // ─── Right panel ──────────────────────────────────────────────────────────────
+        // ─── Right panel ──────────────────────────────────────────────────────────
         function openPanel(html) {
-            dpBody.innerHTML = html; dpTitle.innerHTML = dpBody.querySelector("[data-title]")?.dataset.title || "Details";
+            dpBody.innerHTML = html;
+            dpTitle.innerHTML = dpBody.querySelector("[data-title]")?.dataset.title || "Details";
             detailPanel.classList.add("open");
         }
         function closePanel() { detailPanel.classList.remove("open"); }
@@ -1818,7 +1900,6 @@
             return (!v || v === "—") ? "" :
                 `<div class="dp-row"><span class="dp-key">${k}</span><span class="dp-val">${v}</span></div>`;
         }
-
 
         function buildNodeSummary(n) {
             if (!S.filteredGraph) return "";
@@ -1867,97 +1948,94 @@
         function buildNodePanel(n) {
             const c = NODE_COLORS[n.type] || "#94a3b8";
             const bcls = { gene: "b-gene", drug: "b-drug", variant: "b-var", disease: "b-dis" }[n.type] || "";
-            const title = `<span data-title='<span class="badge ${bcls}">${n.type}</span> &nbsp;${n.label}${n.gwas_significant ? ` <span class="badge b-gwas">GWAS✓</span>` : ""}'></span>`;
-
-            // prediction results for this node
+            const title = `<span data-title='<span class="badge ${bcls}">${n.type}</span> &nbsp;${n.label}${n.gwas_significant ? ` <span class="badge b-gwas">GWAS✓</span>` : ""}${n.predicted ? ` <span class="badge b-pred">⚡ Pred</span>` : ""}'></span>`;
             const preds = S.predictResults?.[n.id] || [];
             let predHtml = "";
             if (preds.length) {
                 predHtml = `<div class="predict-section">
-      <div class="predict-section-title">⚡ Predicted drug-gene interactions</div>
-      ${preds.map(p => `<div class="predict-result-item">
-        <span class="pr-label">${p.label}</span>
-        <div class="pr-bar-bg"><div class="pr-bar-fill" style="width:${Math.round(p.score * 100)}%"></div></div>
-        <span class="pr-score">${(p.score * 100).toFixed(1)}%</span>
-      </div>`).join("")}
-    </div>`;
+  <div class="predict-section-title">⚡ Predicted drug-gene interactions</div>
+  ${preds.map(p => `<div class="predict-result-item">
+    <span class="pr-label">${p.label}</span>
+    <div class="pr-bar-bg"><div class="pr-bar-fill" style="width:${Math.round(p.score * 100)}%"></div></div>
+    <span class="pr-score">${(p.score * 100).toFixed(1)}%</span>
+  </div>`).join("")}
+</div>`;
             } else if (S.predictResults) {
                 predHtml = `<div class="predict-section"><div class="predict-empty">No predictions for this node</div></div>`;
             }
-
             return title + buildNodeSummary(n) + `
-  <div class="dp-section">
-    <div class="dp-section-title">Identity</div>
-    ${row("Label", n.label)}${row("Type", n.type)}${row("Layer", n.layer)}
-    ${row("Gene Symbol", safeV(n.gene_symbol))}${row("Gene Name", safeV(n.gene_name))}
-    ${row("Drug", safeV(n.drug_name))}${row("Variant", safeV(n.variant_name))}
-    ${row("Disease", safeV(n.disease_name))}${row("Disease Group", safeV(n.disease_group))}
-    ${row("Population", safeV(n.population_name))}${row("Degree", n.degree)}
-  </div>
-  <div class="dp-section">
-    <div class="dp-section-title">Evidence & PGx</div>
-    ${row("Evidence Levels", safeV(n.evidence_levels))}
-    ${row("Best Evidence", n.best_evidence ? `<span class="badge b-ev">${n.best_evidence}</span>` : "—")}
-    ${row("Phenotypes", safeV(n.phenotypes))}${row("Gene Families", safeV(n.gene_family))}
-    ${row("Edge Types", safeV(n.connected_edge_types))}
-  </div>
-  <div class="dp-section">
-    <div class="dp-section-title">GWAS Statistics</div>
-    ${row("Significant", n.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
-    ${row("Best p-value", n.best_gwas_p_value != null ? n.best_gwas_p_value.toExponential(3) : "—")}
-    ${row("Studies", n.n_gwas_studies || "—")}${row("Traits", safeV(n.gwas_traits))}
-    ${row("PharmGKB p", n.pharmgkb_best_p_value != null ? n.pharmgkb_best_p_value.toExponential(3) : "—")}
-  </div>
-  ${predHtml}`;
+<div class="dp-section">
+  <div class="dp-section-title">Identity</div>
+  ${row("Label", n.label)}${row("Type", n.type)}${row("Layer", n.layer)}
+  ${row("Gene Symbol", safeV(n.gene_symbol))}${row("Gene Name", safeV(n.gene_name))}
+  ${row("Drug", safeV(n.drug_name))}${row("Variant", safeV(n.variant_name))}
+  ${row("Disease", safeV(n.disease_name))}${row("Disease Group", safeV(n.disease_group))}
+  ${row("Population", safeV(n.population_name))}${row("Degree", n.degree)}
+</div>
+<div class="dp-section">
+  <div class="dp-section-title">Evidence & PGx</div>
+  ${row("Evidence Levels", safeV(n.evidence_levels))}
+  ${row("Best Evidence", n.best_evidence ? `<span class="badge b-ev">${n.best_evidence}</span>` : "—")}
+  ${row("Phenotypes", safeV(n.phenotypes))}${row("Gene Families", safeV(n.gene_family))}
+  ${row("Edge Types", safeV(n.connected_edge_types))}
+</div>
+<div class="dp-section">
+  <div class="dp-section-title">GWAS Statistics</div>
+  ${row("Significant", n.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
+  ${row("Best p-value", n.best_gwas_p_value != null ? n.best_gwas_p_value.toExponential(3) : "—")}
+  ${row("Studies", n.n_gwas_studies || "—")}${row("Traits", safeV(n.gwas_traits))}
+  ${row("PharmGKB p", n.pharmgkb_best_p_value != null ? n.pharmgkb_best_p_value.toExponential(3) : "—")}
+</div>
+${predHtml}`;
         }
 
         function buildEdgePanel(l, nm) {
             const src = typeof l.source === "object" ? l.source : nm.get(l.source);
             const tgt = typeof l.target === "object" ? l.target : nm.get(l.target);
-            const title = `<span data-title="<strong>${l.edge_type}</strong>${l.gwas_significant ? ` <span class='badge b-gwas'>GWAS✓</span>` : ""}"></span>`;
-
+            const isPred = l.predicted || l.layer === "predicted";
+            const title = `<span data-title="<strong>${l.edge_type}</strong>${l.gwas_significant ? ` <span class='badge b-gwas'>GWAS✓</span>` : ""}${isPred ? ` <span class='badge b-pred'>⚡</span>` : ""}"></span>`;
             let freqHtml = "";
             if (l.allele_frequencies) {
                 freqHtml = `<div class="dp-section-title" style="margin-top:6px">Allele Frequencies</div>
-      <div class="freq-grid">`+
+<div class="freq-grid">` +
                     Object.entries(l.allele_frequencies).filter(([, v]) => v != null).map(([code, val]) =>
                         `<span class="fc">${code.toUpperCase()}</span>
-         <div class="fb-bg"><div class="fb-fill" style="width:${Math.round(val * 100)}%"></div></div>
-         <span class="fv">${(val * 100).toFixed(1)}%</span>`
+<div class="fb-bg"><div class="fb-fill" style="width:${Math.round(val * 100)}%"></div></div>
+<span class="fv">${(val * 100).toFixed(1)}%</span>`
                     ).join("") + `</div>`;
             } else if (l.allele_frequency != null) {
-                freqHtml = row("Allele Freq (" + (l.population_name || l.population_code || "") + `)"`, `${(l.allele_frequency * 100).toFixed(3)}%`);
+                freqHtml = row("Allele Freq (" + (l.population_name || l.population_code || "") + ")", `${(l.allele_frequency * 100).toFixed(3)}%`);
             }
-
             return title + `
-  <div class="dp-section">
-    <div class="dp-section-title">Connection</div>
-    ${row("From", src?.label || l.source_label || "?")}${row("To", tgt?.label || l.target_label || "?")}
-    ${row("Edge Type", l.edge_type)}${row("Source DB", safeV(l.source_database))}${row("Layer", l.layer)}
-  </div>
-  <div class="dp-section">
-    <div class="dp-section-title">Evidence</div>
-    ${row("Evidence Level", safeV(l.evidence_level))}${row("Phenotype", safeV(l.phenotype_names))}
-    ${row("Association", safeV(l.association))}${row("Interaction Type", safeV(l.interaction_type))}
-    ${row("PMIDs", safeV(l.pmids))}
-  </div>
-  <div class="dp-section">
-    <div class="dp-section-title">GWAS</div>
-    ${row("Significant", l.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
-    ${row("p-value", l.best_gwas_p_value != null ? l.best_gwas_p_value.toExponential(3) : "—")}
-    ${row("Odds Ratio", l.best_gwas_odds_ratio != null ? l.best_gwas_odds_ratio.toFixed(3) : "—")}
-    ${row("Beta", l.best_gwas_beta != null ? l.best_gwas_beta.toFixed(4) : "—")}
-    ${row("Trait", safeV(l.best_gwas_trait))}
-  </div>
-  <div class="dp-section">
-    <div class="dp-section-title">Scores & Frequencies</div>
-    ${row("Interaction Score", l.interaction_score_max != null ? l.interaction_score_max.toFixed(3) : "—")}
-    ${row("PharmGKB p", l.pharmgkb_best_p_value != null ? l.pharmgkb_best_p_value.toExponential(3) : "—")}
-    ${freqHtml}
-  </div>`;
+<div class="dp-section">
+  <div class="dp-section-title">Connection</div>
+  ${row("From", src?.label || l.source_label || "?")}${row("To", tgt?.label || l.target_label || "?")}
+  ${row("Edge Type", l.edge_type)}${row("Source DB", safeV(l.source_database))}${row("Layer", l.layer)}
+  ${isPred ? row("Prediction Score", l.interaction_score_max != null ? (l.interaction_score_max * 100).toFixed(1) + "%" : "—") : ""}
+</div>
+<div class="dp-section">
+  <div class="dp-section-title">Evidence</div>
+  ${row("Evidence Level", safeV(l.evidence_level))}${row("Phenotype", safeV(l.phenotype_names))}
+  ${row("Association", safeV(l.association))}${row("Interaction Type", safeV(l.interaction_type))}
+  ${row("PMIDs", safeV(l.pmids))}
+</div>
+<div class="dp-section">
+  <div class="dp-section-title">GWAS</div>
+  ${row("Significant", l.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
+  ${row("p-value", l.best_gwas_p_value != null ? l.best_gwas_p_value.toExponential(3) : "—")}
+  ${row("Odds Ratio", l.best_gwas_odds_ratio != null ? l.best_gwas_odds_ratio.toFixed(3) : "—")}
+  ${row("Beta", l.best_gwas_beta != null ? l.best_gwas_beta.toFixed(4) : "—")}
+  ${row("Trait", safeV(l.best_gwas_trait))}
+</div>
+<div class="dp-section">
+  <div class="dp-section-title">Scores & Frequencies</div>
+  ${row("Interaction Score", l.interaction_score_max != null ? l.interaction_score_max.toFixed(3) : "—")}
+  ${row("PharmGKB p", l.pharmgkb_best_p_value != null ? l.pharmgkb_best_p_value.toExponential(3) : "—")}
+  ${freqHtml}
+</div>`;
         }
 
-        // ─── Table drawer ─────────────────────────────────────────────────────────────
+        // ─── Table drawer ─────────────────────────────────────────────────────────
         const TABLE_COLS = {
             gene: [{ k: "label", h: "Symbol" }, { k: "gene_name", h: "Full Name" }, { k: "gene_family", h: "Family", f: v => safeV(v) }, { k: "degree", h: "Degree", cls: "mono" }, { k: "connected_edge_types", h: "Edge Types", f: v => safeV(v) }],
             drug: [{ k: "label", h: "Drug" }, { k: "degree", h: "Degree", cls: "mono" }, { k: "evidence_levels", h: "Evidence", f: v => safeV(v) }, { k: "phenotypes", h: "Phenotypes", f: v => safeV(v) }],
@@ -1990,7 +2068,6 @@
                     return `<td class="${c.cls || ""}" title="${safeV(raw)}">${val}</td>`;
                 }).join("")}</tr>`
             ).join("");
-
             tableHead.querySelectorAll("th").forEach(th => {
                 th.addEventListener("click", () => {
                     const col = th.dataset.col;
@@ -2023,14 +2100,13 @@
         });
         tableSearch.addEventListener("input", renderTable);
 
-        // ─── Prediction model ─────────────────────────────────────────────────────────
+        // ─── Prediction (run on demand) ───────────────────────────────────────────
         predictBtn.addEventListener("click", async () => {
             if (!S.selectedNode || !S.rawGraph) return;
             const ag = activeGraph();
             const n = ag.nodes.find(x => x.id === S.selectedNode);
             if (!n) return;
 
-            // Only gene/variant nodes make sense for drug-gene interaction prediction
             if (!["gene", "variant"].includes(n.type)) {
                 openPanel(buildNoticePanel("Select a gene or variant",
                     "Drug-gene interaction prediction works on gene and variant nodes.<br>Click a gene (●) or variant (▲) node first.") + buildNodePanel(n));
@@ -2040,74 +2116,49 @@
             predictBtn.disabled = true;
             predictBtn.textContent = "⚡ Running…";
             openPanel(`<div class="dp-section">
-    <div class="dp-section-title">⚡ Predicting drug-gene interactions…</div>
-    <div class="predict-loading">Running model for ${n.label}…</div>
-  </div>` + buildNodePanel(n));
+  <div class="dp-section-title">⚡ Predicting drug-gene interactions…</div>
+  <div class="predict-loading">Running model for ${n.label}…</div>
+</div>` + buildNodePanel(n));
 
             if (PREDICT_MOCK) {
-                // ── MOCK MODE ─────────────────────────────────────────────────────────────
-                // Simulates what your real model will return using actual drug nodes from
-                // the loaded graph. Replace PREDICT_MOCK = false once your server is ready.
                 await new Promise(r => setTimeout(r, 800));
                 handlePredictionResult(n, buildMockPrediction(n, ag), true);
                 return;
             }
 
-            // ── REAL MODE ─────────────────────────────────────────────────────────────
             try {
                 const payload = {
-                    node_id: n.id,
-                    node_type: n.type,
-                    label: n.label,
-                    gene_symbol: n.gene_symbol,
-                    variant_name: n.variant_name,
-                    evidence_levels: n.evidence_levels,
-                    gene_family: n.gene_family,
-                    phenotypes: n.phenotypes,
-                    gwas_p_value: n.best_gwas_p_value,
+                    node_id: n.id, node_type: n.type, label: n.label,
+                    gene_symbol: n.gene_symbol, variant_name: n.variant_name,
+                    evidence_levels: n.evidence_levels, gene_family: n.gene_family,
+                    phenotypes: n.phenotypes, gwas_p_value: n.best_gwas_p_value,
                 };
-                const res = await fetch(PREDICT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                const res = await fetch(PREDICT_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 handlePredictionResult(n, data, false);
             } catch (err) {
                 console.error("Prediction error:", err);
                 openPanel(`<div class="dp-section">
-      <div class="dp-section-title" style="color:var(--predict)">⚡ Model not connected yet</div>
-      <div class="dp-row"><span class="dp-val" style="color:var(--dim)">
-        Set <code style="color:var(--accent)">PREDICT_MOCK = false</code> once your server is running.<br><br>
-        <strong style="color:var(--text)">Endpoint</strong><br>
-        <code style="color:var(--accent)">POST ${PREDICT_URL}</code><br><br>
-        <strong style="color:var(--text)">Input payload</strong><br>
-        <code style="color:var(--dim2);font-size:10px">{ node_id, node_type, label,<br>
-        gene_symbol, variant_name,<br>
-        evidence_levels, gene_family,<br>
-        phenotypes, gwas_p_value }</code><br><br>
-        <strong style="color:var(--text)">Expected response</strong><br>
-        <code style="color:var(--dim2);font-size:10px">{<br>
-        &nbsp;predictions: [{<br>
-        &nbsp;&nbsp;label, drug_id, score,<br>
-        &nbsp;&nbsp;interaction_type, evidence<br>
-        &nbsp;}],<br>
-        &nbsp;predicted_edges: [{<br>
-        &nbsp;&nbsp;source, target,<br>
-        &nbsp;&nbsp;score, interaction_type<br>
-        &nbsp;}],<br>
-        &nbsp;predicted_nodes: [node_id, …]<br>
-        }</code>
-      </span></div>
-    </div>` + buildNodePanel(n));
+  <div class="dp-section-title" style="color:var(--predict)">⚡ Model not connected yet</div>
+  <div class="dp-row"><span class="dp-val" style="color:var(--dim)">
+    Set <code style="color:var(--accent)">PREDICT_MOCK = false</code> once your server is running.<br><br>
+    <strong style="color:var(--text)">Endpoint</strong><br>
+    <code style="color:var(--accent)">POST ${PREDICT_URL}</code><br><br>
+    <strong style="color:var(--text)">Expected response</strong><br>
+    <code style="color:var(--dim2);font-size:10px">{<br>
+    &nbsp;predictions: [{label, drug_id, score, interaction_type, evidence}],<br>
+    &nbsp;predicted_edges: [{source, target, score, interaction_type}],<br>
+    &nbsp;predicted_nodes: [node_id, …]<br>
+    }</code>
+  </span></div>
+</div>` + buildNodePanel(n));
                 setStatus("Model not connected — see panel for wiring instructions.");
                 predictBtn.disabled = false;
-                predictBtn.textContent = "⚡ Predict interactions";
+                predictBtn.textContent = "⚡ Run Prediction";
             }
         });
 
-        // ── Mock: picks real drug nodes not yet connected to this node ────────────────
         function buildMockPrediction(n, ag) {
             const connected = new Set();
             ag.links.forEach(l => {
@@ -2120,48 +2171,37 @@
                 .sort((a, b) => (b.degree || 0) - (a.degree || 0))
                 .slice(0, 5);
             const predictions = drugs.map((d, i) => ({
-                label: d.label,
-                drug_id: d.id,
+                label: d.label, drug_id: d.id,
                 score: +(0.95 - i * 0.12).toFixed(2),
                 interaction_type: types[i % types.length],
-                evidence: "mock prediction — replace with real model output",
+                evidence: "mock prediction",
             }));
-            const predicted_edges = predictions.map(p => ({
-                source: n.id, target: p.drug_id,
-                score: p.score, interaction_type: p.interaction_type,
-            }));
-            const predicted_nodes = predictions.map(p => p.drug_id);
-            return { predictions, predicted_edges, predicted_nodes };
+            return {
+                predictions,
+                predicted_edges: predictions.map(p => ({ source: n.id, target: p.drug_id, score: p.score, interaction_type: p.interaction_type })),
+                predicted_nodes: predictions.map(p => p.drug_id),
+            };
         }
 
-        // ── Handle result (real or mock) ─────────────────────────────────────────────
-        // Your model should return:
-        //   predictions:     [{label, drug_id, score, interaction_type, evidence}]
-        //   predicted_edges: [{source, target, score, interaction_type}]  → new graph edges
-        //   predicted_nodes: [node_id, …]                                 → glow highlights
         function handlePredictionResult(n, data, isMock) {
             S.predictResults = S.predictResults || {};
             S.predictResults[n.id] = data.predictions || [];
 
-            // 1. Inject predicted edges as a new visual layer
             if (data.predicted_edges && S.filteredGraph) {
                 const existingIds = new Set(S.filteredGraph.links.map(l => l.id));
                 const nm = new Map(S.filteredGraph.nodes.map(x => [x.id, x]));
                 (data.predicted_edges || []).forEach((pe, i) => {
                     const eid = `pred__${n.id}__${pe.target}__${i}`;
-                    if (existingIds.has(eid)) return;
-                    if (!nm.has(pe.source) || !nm.has(pe.target)) return;
+                    if (existingIds.has(eid) || !nm.has(pe.source) || !nm.has(pe.target)) return;
                     S.filteredGraph.links.push({
-                        id: eid,
-                        source: pe.source, target: pe.target,
+                        id: eid, source: pe.source, target: pe.target,
                         edge_type: "gene_drug", relation: "gene_drug",
                         source_type: "gene", target_type: "drug",
                         layer: "predicted", predicted: true,
                         interaction_score_max: pe.score || null,
                         interaction_type: [pe.interaction_type || "predicted"],
-                        evidence_level: [], gene_family: [], drug_name: [],
-                        variant_name: [], disease_name: [], phenotype_names: [],
-                        association: [], source_database: ["model"],
+                        evidence_level: [], gene_family: [], drug_name: [], variant_name: [],
+                        disease_name: [], phenotype_names: [], association: [], source_database: ["model"],
                         gwas_significant: false, allele_frequencies: null,
                         source_label: nm.get(pe.source)?.label || pe.source,
                         target_label: nm.get(pe.target)?.label || pe.target,
@@ -2169,59 +2209,79 @@
                 });
             }
 
-            // 2. Add glow to predicted drug nodes
-            const glowIds = new Set((data.predicted_nodes || []).concat(
-                (data.predictions || []).map(p => p.drug_id).filter(Boolean)
-            ));
-            if (S.filteredGraph) {
-                S.filteredGraph.nodes.forEach(x => { if (glowIds.has(x.id)) x.predicted = true; });
-            }
+            const glowIds = new Set((data.predicted_nodes || []).concat((data.predictions || []).map(p => p.drug_id).filter(Boolean)));
+            if (S.filteredGraph) S.filteredGraph.nodes.forEach(x => { if (glowIds.has(x.id)) x.predicted = true; });
 
-            // 3. Redraw with new edges + glows, then open panel with ranked list
             drawGraph();
             openPanel(buildNodePanel({ ...n, predicted: true }));
             setStatus(`${isMock ? "[MOCK] " : ""}${(data.predictions || []).length} predicted interactions for ${n.label}`);
             predictBtn.disabled = false;
-            predictBtn.textContent = "⚡ Predict interactions";
+            predictBtn.textContent = "⚡ Run Prediction";
         }
 
         function buildNoticePanel(title, msg) {
             return `<div class="dp-section">
-    <div class="dp-section-title" style="color:var(--predict)">${title}</div>
-    <div class="dp-row"><span class="dp-val" style="color:var(--dim)">${msg}</span></div>
-  </div>`;
+  <div class="dp-section-title" style="color:var(--predict)">${title}</div>
+  <div class="dp-row"><span class="dp-val" style="color:var(--dim)">${msg}</span></div>
+</div>`;
         }
 
-        // ─── Layer toggle ─────────────────────────────────────────────────────────────
+        // ─── Layer toggle ─────────────────────────────────────────────────────────
+        // FIX: "predictions" is now a proper layer with its own filter section
         document.querySelectorAll(".lbtn").forEach(btn => {
             btn.addEventListener("click", () => {
-                S.activeLayer = btn.dataset.layer;
+                const layer = btn.dataset.layer;
+                S.activeLayer = layer;
                 document.querySelectorAll(".lbtn").forEach(b => b.classList.toggle("active", b === btn));
-                const pgx = S.activeLayer !== "base";
-                pgxFilters.style.display = pgx ? "flex" : "none"; pgxSep.style.display = pgx ? "block" : "none";
-                if (pgx && !S.pharmGraph) loadPharmGKB(); else { S.selectedNode = null; hideLanding(); applyFilters(); }
-                setStatus(`Layer: ${S.activeLayer}`);
+
+                const isPgx = layer === "pharmgkb" || layer === "both";
+                const isPred = layer === "predictions";
+
+                // Show/hide PGx filters
+                pgxFilters.classList.toggle("visible", isPgx);
+                pgxSep.style.display = isPgx ? "block" : "none";
+
+                // Show/hide Prediction filters
+                predFilters.classList.toggle("visible", isPred);
+                predSep.style.display = isPred ? "block" : "none";
+
+                // Load on demand
+                if (isPgx && !S.pharmGraph) { loadPharmGKB(); return; }
+                if (isPred && !S.predGraph) { loadPredictions(); return; }
+
+                S.selectedNode = null;
+                hideLanding();
+                applyFilters();
+                setStatus(`Layer: ${layer}`);
             });
         });
 
-        // ─── Checkboxes ───────────────────────────────────────────────────────────────
+        // ─── Checkboxes ───────────────────────────────────────────────────────────
         gwasChk.addEventListener("change", () => { S.filters.gwasOnly = gwasChk.checked; applyFilters(); });
-        const hpc = document.getElementById("hidePopChk");
-        if (hpc) hpc.addEventListener("change", () => { S.filters.hidePop = hpc.checked; applyFilters(); });
+        // FIX: hidePopChk is now reliably resolved above
+        if (hidePopChk) hidePopChk.addEventListener("change", () => { S.filters.hidePop = hidePopChk.checked; applyFilters(); });
 
-        // ─── Reset ────────────────────────────────────────────────────────────────────
+        // ─── Reset ────────────────────────────────────────────────────────────────
         document.getElementById("brandLogo").addEventListener("click", () => resetBtn.click());
         resetBtn.addEventListener("click", () => {
             searchInput.value = ""; S.selectedNode = null; S.selectedEdge = null; S.browseType = null;
             S.nodePositions.clear(); S.predictResults = null; predictBtn.disabled = true;
-            S.filters = { edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all", association: "all", maxNodes: 200, pgxEvidence: "all", phenotype: "all", population: "all", gwasOnly: false, hidePop: true };
+            S.activeLayer = "base";
+            S.filters = { edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all", association: "all", maxNodes: 200, pgxEvidence: "all", phenotype: "all", population: "all", gwasOnly: false, hidePop: true, predGene: "all", predDrug: "all", predMinScore: 0, showPredOnly: false };
+            if (predScoreSlider) { predScoreSlider.value = 0; predScoreVal.textContent = "0%"; }
+            if (showPredOnlyChk) showPredOnlyChk.checked = false;
             combos.forEach(c => c.set("all")); cMax.set("200");
-            gwasChk.checked = false; if (hpc) hpc.checked = true;
+            gwasChk.checked = false; if (hidePopChk) hidePopChk.checked = true;
+            // Reset layer buttons
+            document.querySelectorAll(".lbtn").forEach(b => b.classList.toggle("active", b.dataset.layer === "base"));
+            // Hide all extra filter sections
+            pgxFilters.classList.remove("visible"); pgxSep.style.display = "none";
+            predFilters.classList.remove("visible"); predSep.style.display = "none";
             document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
             closePanel(); showLanding(); setStatus("Reset.");
         });
 
-        // ─── Load functions ───────────────────────────────────────────────────────────
+        // ─── Load functions ───────────────────────────────────────────────────────
         function setStatus(m) { statusEl.textContent = m; }
         const getBN = p => String(p || "").trim();
         async function fetchJ(path) { const r = await fetch(path); if (!r.ok) throw new Error(`HTTP ${r.status}: ${path}`); return r.json(); }
@@ -2241,7 +2301,7 @@
                 S.rawGraph = normalize({ metadata: manifest.metadata || {}, nodes, links });
                 populateCombos();
                 centerEl.style.display = "none";
-                showLanding();  // Start in browse/landing mode
+                showLanding();
                 setStatus(`Loaded ${nodes.length} nodes · ${links.length} edges — pick a starting point above`);
             } catch (err) {
                 console.error(err);
@@ -2266,10 +2326,32 @@
             } catch (err) { console.error(err); setStatus("PharmGKB layer failed — check pharmgkb_layer.json."); }
         }
 
-        // ─── Resize ───────────────────────────────────────────────────────────────────
+        async function loadPredictions() {
+            try {
+                setStatus("Loading prediction layer…");
+                const manifest = await fetchJ("predictions_layer.json");
+                const nf = (manifest.node_files || []).map(i => getBN(i.file));
+                const ef = (manifest.edge_files || []).map(i => getBN(i.file));
+                const [nc, ec] = await Promise.all([Promise.all(nf.map(fetchJ)), Promise.all(ef.map(fetchJ))]);
+                const nodes = nc.flatMap(c => c.nodes || []);
+                const links = ec.flatMap(c => c.links || c.edges || []);
+                S.predGraph = normalize({ metadata: manifest.metadata || {}, nodes, links });
+                // Mark all loaded prediction layer items
+                S.predGraph.nodes.forEach(n => { n.predicted = true; });
+                S.predGraph.links.forEach(l => { l.predicted = true; l.layer = "predicted"; });
+                populateCombos(); populatePredCombos(); applyFilters();
+                const m = manifest.metadata || {};
+                setStatus(`Predictions loaded: ${m.unique_genes || nodes.filter(n => n.type === "gene").length} genes · ${m.unique_drugs || nodes.filter(n => n.type === "drug").length} drugs · ${links.length} novel edges`);
+            } catch (err) {
+                console.error(err);
+                setStatus("Predictions layer failed — check predictions_layer.json.");
+            }
+        }
+
+        // ─── Resize ───────────────────────────────────────────────────────────────
         window.addEventListener("resize", () => { if (S.filteredGraph && !landingEl.classList.contains("hidden")) drawGraph(); });
 
-        // ─── Boot ─────────────────────────────────────────────────────────────────────
+        // ─── Boot ─────────────────────────────────────────────────────────────────
         document.addEventListener("DOMContentLoaded", loadChunkedGraph);
     </script>
 </body>
