@@ -16,12 +16,23 @@ PharmGraph enables:
 
 Overall, PharmGraph functions as both an exploratory tool and a predictive system for discovering clinically relevant relationships beyond curated databases.
 
-## PRERQUISITES
+## KEY FEATURES
 
-| Tool   | Version (recommended) |
-|--------|------------------------|
-| Git    | 2.30+                  |
-| Python | 3.8 or higher          |
+- **Interactive Knowledge Graph**: Explore 50,000+ drug-gene-variant-disease-population relationships
+- **Population-Aware Analysis**: View variant frequencies across 9 global populations
+- **Multi-Layer Architecture**: Toggle between clinical data, modeled predictions, and combined views
+- **Smart Filtering**: Filter by gene family, source database, evidence level, phenotype, population, relationship type, and GWAS significance
+- **ML-Powered Predictions**: Discover novel drug-gene interactions predicted by graph neural networks
+- **Clinical Context**: GWAS statistics, PGx annotations, and an integrated bioinformatics pipeline for computing variant frequencies 
+
+## PREREQUISITES
+
+| Requirement | Details |
+|-------------|---------|
+| **Git** | 2.30+ |
+| **Python** | 3.8 or higher |
+| **Browser** | Modern browser (Chrome, Firefox, Safari, Edge) |
+| **Data Files** | Included in repository (`pharmgkb_graph.json`, `predicted_graph.json`, `base_graph.json`) |
 
 
 ## INSTALLATION  
@@ -29,19 +40,39 @@ Overall, PharmGraph functions as both an exploratory tool and a predictive syste
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/venkat-aruna/pharmgraph.git
+cd pharmgraph
 python -m http.server 8000
 ```
 
-### 2. Local host website
-Go to your local browser and and tye the url (http://localhost:8000/)
+### 2. Start local web server
+```bash
+python -m http.server 8000
+```
+
+### 3. Open in browser
+Go to your local browser and navigate to: http://localhost:8000/
+
+## USAGE
+
+Once the server is running:
+
+1. **Browse by Entity Type**: Click Disease, Gene, Drug, Variant, or Population on the landing page
+2. **Search**: Type a gene (e.g., "CYP2D6"), drug (e.g., "Warfarin"), or variant (e.g., "rs4149056") or just explore
+3. **Explore Relationships**: Click on edges for relationship details, evidence, and interaction scores
+4. **Explore Relationships**: Click on nodes for identity information, PGx evidence, and GWAS statistics
+5. **Filter the Graph**: Use the top filter bar to refine by gene family, source database, evidence level, phenotype, population, and relationship type
+6. **Switch Layers**: Toggle between clinical data, modeled predictions, and combined views
+
 
 ## NOTES
 
 PharmGraph is a research-oriented system for integrating pharmacogenomic knowledge into a unified graph-based framework. It supports exploration, interpretation, and prediction of drug–gene relationships.
 
-## Future improvements
+## FUTURE IMPROVEMENTS
 
-Expanding population coverage for underrepresented groups
-Improving ML prediction accuracy and expand to edges other than genes-drug 
-Enhancing clinical decision-support capabilities
-Increasing dataset completeness and graph connectivity
+- [ ] Expand population coverage to include more underrepresented populations 
+- [ ] Expand to variant-disease edges
+- [ ] Improve ML prediction accuracy and add drug-drug interaction predictions
+- [ ] Add export to CSV/JSON functionality
+- [ ] Enhance clinical decision-support capabilities
+- [ ] Increase dataset completeness and graph connectivity
