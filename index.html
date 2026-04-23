@@ -2366,7 +2366,7 @@ ${n.type !== "gene" ? `<div class="dp-section">
   ${row("Edge Type", l.edge_type)}${row("Source DB", safeV(l.source_database))}
   ${isPred ? row("Prediction Score", l.interaction_score_max != null ? (l.interaction_score_max * 100).toFixed(1) + "%" : "—") : ""}
   ${isPred ? `<div class="dp-row" style="margin-top:6px;padding:8px 10px;background:rgba(56,189,248,0.05);border-left:3px solid rgba(56,189,248,0.3);border-radius:4px">
-  <span class="dp-val" style="color:var(--dim);font-size:11px;font-style:italic">Prediction score indicates the model's confidence that this gene-drug interaction exists based on graph structure, gene families, drug classes, and population frequency patterns.</span>
+  <span class="dp-val" style="color:var(--dim);font-size:11px;font-style:italic">A high prediction score means the predicted gene-drug relationship closely resembles known true gene-drug pairs the model was trained on; these predicted relationships are worth investigating further.</span>
 </div>` : ""}
 </div>
 <div class="dp-section">
