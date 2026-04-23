@@ -519,6 +519,46 @@
             background: var(--surface2)
         }
 
+        .landing-card[data-type="population"] {
+            grid-column: 1 / -1;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .node-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 12px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dim);
+            margin-bottom: 4px;
+        }
+
+        .legend-row:last-child {
+            margin-bottom: 0;
+        }
+
         .lc-icon {
             font-size: 22px;
             margin-bottom: 8px
@@ -1107,13 +1147,13 @@
             <div class="sep"></div>
             <span class="bar-label">Filters</span>
 
-            <div class="combo" id="cEdgeType" data-ph="Edge type">
-                <input type="text" readonly placeholder="Edge type" />
+            <div class="combo" id="cEdgeType" data-ph="Edge Type">
+                <input type="text" readonly placeholder="Edge Type" />
                 <span class="combo-arr">▾</span>
                 <div class="combo-list"></div>
             </div>
-            <div class="combo" id="cGeneFamily" data-ph="Gene family">
-                <input type="text" readonly placeholder="Gene family" />
+            <div class="combo" id="cGeneFamily" data-ph="Gene Family">
+                <input type="text" readonly placeholder="Gene Family" />
                 <span class="combo-arr">▾</span>
                 <div class="combo-list"></div>
             </div>
@@ -1127,8 +1167,8 @@
                 <span class="combo-arr">▾</span>
                 <div class="combo-list"></div>
             </div>
-            <div class="combo" id="cAssoc" data-ph="Association">
-                <input type="text" readonly placeholder="Association" />
+            <div class="combo" id="cAssoc" data-ph="Edge Association">
+                <input type="text" readonly placeholder="Edge Association" />
                 <span class="combo-arr">▾</span>
                 <div class="combo-list"></div>
             </div>
@@ -1152,18 +1192,6 @@
             </div>
 
             <!-- FIX: Prediction filters: only visible when layer = predictions -->
-            <div class="sep" id="predSep" style="display:none"></div>
-            <div id="predFilters" class="filter-section">
-                <span class="bar-label" style="color:var(--predict)">⚡ Pred</span>
-                <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-                    <span style="font-size:11px;color:var(--dim);white-space:nowrap">Min score</span>
-                    <input type="range" id="predScoreSlider" min="0" max="100" value="0"
-                        style="width:80px;accent-color:var(--predict);cursor:pointer"
-                        title="Minimum prediction score threshold" />
-                    <span id="predScoreVal"
-                        style="font-size:10px;color:var(--predict);font-family:'SF Mono','Cascadia Code','Consolas','Courier New',monospace;min-width:36px">0%</span>
-                </div>
-            </div>
 
             <div class="sep"></div>
             <div class="combo" id="cMax" data-ph="Max nodes" style="min-width:100px">
@@ -1179,16 +1207,39 @@
             <!-- CANVAS -->
             <div class="canvas-wrap">
                 <svg id="graph"></svg>
+                
+                <!-- Node size legend -->
+                <div class="node-legend">
+                    <div class="legend-title">Node Size</div>
+                    <div class="legend-row">
+                        <svg width="24" height="20" viewBox="0 0 24 20">
+                            <circle cx="12" cy="10" r="8" fill="var(--accent)" opacity="0.3"/>
+                        </svg>
+                        <span>High degree</span>
+                    </div>
+                    <div class="legend-row">
+                        <svg width="24" height="20" viewBox="0 0 24 20">
+                            <circle cx="12" cy="10" r="5" fill="var(--accent)" opacity="0.3"/>
+                        </svg>
+                        <span>Medium degree</span>
+                    </div>
+                    <div class="legend-row">
+                        <svg width="24" height="20" viewBox="0 0 24 20">
+                            <circle cx="12" cy="10" r="3" fill="var(--accent)" opacity="0.3"/>
+                        </svg>
+                        <span>Low degree</span>
+                    </div>
+                </div>
 
                 <div class="browse-landing hidden" id="browseLanding">
                     <div class="landing-title">Where do you want to <strong>start?</strong></div>
-                    <div class="landing-subtitle">Select an entity type above to browse the knowledge graph, or search
-                        for a specific gene, drug, variant, disease, or population.</div>
+                    <div class="landing-subtitle">Select an entity type to browse the knowledge graph, or search
+                        for a specific gene, drug, variant, or disease.</div>
                     <div class="landing-grid">
                         <div class="landing-card" data-type="disease">
                             <div class="lc-icon" style="color:var(--disease)">◆</div>
                             <div class="lc-title" style="color:var(--disease)">Start with Disease</div>
-                            <div class="lc-desc">Pick a disease and explore associated genes, variants and drugs</div>
+                            <div class="lc-desc">Pick a disease and explore associated genes</div>
                         </div>
                         <div class="landing-card" data-type="gene">
                             <div class="lc-icon" style="color:var(--gene)">●</div>
@@ -1203,12 +1254,12 @@
                         <div class="landing-card" data-type="variant">
                             <div class="lc-icon" style="color:var(--variant)">▲</div>
                             <div class="lc-title" style="color:var(--variant)">Start with Variant</div>
-                            <div class="lc-desc">Look up an rsID and see its clinical pharmacogenomics context</div>
+                            <div class="lc-desc">Look up gene variants (including rsIDs) and see its clinical pharmacogenomics context</div>
                         </div>
                         <div class="landing-card" data-type="population">
                             <div class="lc-icon" style="color:var(--pop)">◉</div>
                             <div class="lc-title" style="color:var(--pop)">Start with Population</div>
-                            <div class="lc-desc">Explore allele frequencies across 26 global populations</div>
+                            <div class="lc-desc">Explore variant frequencies across 9 global populations</div>
                         </div>
                     </div>
                 </div>
@@ -1335,7 +1386,6 @@
                 association: "all", maxNodes: 200,
                 phenotype: "all", population: "all",
                 gwasOnly: false, hidePop: false,
-                predMinScore: 0,
             }
         };
 
@@ -1366,10 +1416,6 @@
         const hidePopChk = document.getElementById("hidePopChk");
         const pgxFilters = document.getElementById("pgxFilters");
         const pgxSep = document.getElementById("pgxSep");
-        const predFilters = document.getElementById("predFilters");
-        const predSep = document.getElementById("predSep");
-        const predScoreSlider = document.getElementById("predScoreSlider");
-        const predScoreVal = document.getElementById("predScoreVal");
 
         // Initialize filter visibility for default layer (without_predictions)
         pgxFilters.classList.add("visible");
@@ -1419,15 +1465,8 @@
         cEdgeType.pop(["gene_disease", "gene_drug", "variant_gene", "variant_drug", "variant_population"]);
         cPop.pop(Object.values(POP_LABELS));
         cMax.pop(["200", "500", "1000", "2000", "5000"]);
-        cMax.set("500");
+        cMax.set("200");
 
-        predScoreSlider.addEventListener("input", () => {
-            const pct = Number(predScoreSlider.value) / 100;
-            const score = pct === 0 ? 0 : 0.999 + pct * 0.001;
-            S.filters.predMinScore = score;
-            predScoreVal.textContent = pct === 0 ? "0%" : (score * 100).toFixed(4) + "%";
-            applyFilters();
-        });
 
         // ─── Normalize graph ──────────────────────────────────────────────────────
         function normalize(graph) {
@@ -1747,9 +1786,11 @@
                 if (!inclCI(l.source_database, f.sourceDb)) return false;
                 if (!inclCI(l.evidence_level, f.evidenceLevel)) return false;
                 if (!inclCI(l.association, f.association)) return false;
+                
+                // Phenotype filter - applies to all edges that have phenotype_names
+                if (f.phenotype !== "all" && !inclCI(l.phenotype_names, f.phenotype)) return false;
 
                 if (l.layer === "pharmgkb") {
-                    if (f.phenotype !== "all" && !inclCI(l.phenotype_names, f.phenotype)) return false;
                     if (f.gwasOnly && !l.gwas_significant) return false;
                     if (f.population !== "all") {
                         const pc = Object.entries(POP_LABELS).find(([, v]) => v === f.population)?.[0];
@@ -1759,11 +1800,6 @@
                     if (f.hidePop && l.edge_type === "variant_population") return false;
                 }
 
-                // FIX: prediction-layer filters now only apply to predicted edges
-                if (l.layer === "predicted" || l.predicted) {
-                    const score = l.pred_prob ?? l.interaction_score_max ?? 1;
-                    if (f.predMinScore > 0 && score < f.predMinScore) return false;
-                }
 
                 return true;
             });
@@ -1828,26 +1864,14 @@
                 // Always keep selected nodes
                 S.selectedNodes.forEach(id => keep.add(id));
                 
-                // Always keep predicted nodes when layer includes predictions
-                if (S.activeLayer === "with_predictions" || S.activeLayer === "predictions_only") {
-                    nodes.forEach(n => {
-                        if (n.predicted) keep.add(n.id);
-                    });
-                    // Also ensure both endpoints of predicted edges are kept
-                    links.forEach(l => {
-                        if (l.predicted || l.layer === "predicted") {
-                            keep.add(l.source);
-                            keep.add(l.target);
-                        }
-                    });
-                }
-                
-                // Use stratified sampling if: browsing by type, searching, has selected nodes, OR viewing with_predictions layer
-                if (S.browseType || S.selectedNodes.size > 0 || kw || S.activeLayer === "with_predictions") {
-                    // Group edges by type
+                // Use stratified sampling if: browsing by type, searching, has selected nodes, OR viewing prediction layers
+                if (S.browseType || S.selectedNodes.size > 0 || kw || S.activeLayer === "with_predictions" || S.activeLayer === "predictions_only") {
+                    // Group edges by type (treat predicted edges as separate types)
                     const edgesByType = new Map();
                     links.forEach(l => {
-                        const et = l.edge_type || 'unknown';
+                        // Use different type keys for predicted vs non-predicted edges
+                        const isPredicted = l.predicted || l.layer === "predicted";
+                        const et = (isPredicted ? "predicted_" : "") + (l.edge_type || 'unknown');
                         if (!edgesByType.has(et)) edgesByType.set(et, []);
                         edgesByType.get(et).push(l);
                     });
@@ -2232,22 +2256,10 @@ ${l.interaction_score_max != null ? `<span class="tt-k">Score</span> ${l.interac
             }
             
             // Variant/Drug-specific content
-            let variantPopulationNote = "";
             let responseTypeInterpretation = "";
             let variantFreqHtml = "";
             
             if (n.type === "variant" && S.filteredGraph) {
-                // Check if variant has any population edges
-                const hasPopulationEdges = S.filteredGraph.links.some(l => 
-                    l.edge_type === "variant_population" && (l.source === n.id || l.target === n.id)
-                );
-                
-                if (!hasPopulationEdges) {
-                    variantPopulationNote = `<div class="dp-row" style="background:rgba(251,146,60,0.1);border-left:3px solid rgba(251,146,60,0.5);padding:8px 10px;margin:8px 0;border-radius:4px">
-  <span class="dp-val" style="color:rgba(251,146,60,0.9);font-style:italic">This variant is not linked to any population.</span>
-</div>`;
-                }
-                
                 // Collect variant frequencies from connected edges
                 const freqData = {};
                 S.filteredGraph.links.forEach(l => {
@@ -2275,13 +2287,13 @@ ${l.interaction_score_max != null ? `<span class="tt-k">Score</span> ${l.interac
             // Response Type interpretation (for variants and drugs)
             if ((n.type === "variant" || n.type === "drug") && n.response_type && n.response_type.length > 0) {
                 const responseTypeMap = {
-                    'dosage': 'Affects how much drug is needed',
-                    'efficacy': 'Affects whether the drug works',
-                    'toxicity': 'Affects side effects/adverse reactions',
-                    'metabolism': 'Affects how the body processes the drug',
-                    'pk': 'Affects how the body processes the drug',
-                    'metabolism/pk': 'Affects how the body processes the drug',
-                    'pd': 'Affects how the drug acts on the body',
+                    'dosage': 'This variant affects how much drug is needed to work as intended',
+                    'efficacy': 'This variant affects whether the drug works as intended',
+                    'toxicity': 'This variant may cause side effects/adverse reactions when paired with select drugs',
+                    'metabolism': 'This variant affects how the body processes the drug',
+                    'pk': 'This variant affects how the body processes the drug',
+                    'metabolism/pk': 'This variant affects how the body processes the drug',
+                    'pd': 'This variant affects how the drug acts on the body',
                     'other': ''
                 };
                 
@@ -2304,7 +2316,7 @@ ${l.interaction_score_max != null ? `<span class="tt-k">Score</span> ${l.interac
             return title + buildNodeSummary(n) + `
 <div class="dp-section">
   <div class="dp-section-title">Identity</div>
-  ${row("Label", n.label)}${row("Type", n.type)}${row("Layer", n.layer)}
+  ${row("Label", n.label)}${row("Type", n.type)}
   ${row("Gene Symbol", safeV(n.gene_symbol))}${row("Gene Name", safeV(n.gene_name))}
   ${row("Drug", safeV(n.drug_name))}${row("Variant", safeV(n.variant_name))}
   ${row("Disease", safeV(n.disease_name))}${row("Disease Group", safeV(n.disease_group))}
@@ -2315,7 +2327,7 @@ ${l.interaction_score_max != null ? `<span class="tt-k">Score</span> ${l.interac
   ${row("Evidence Levels", safeV(n.evidence_levels))}
   ${row("Best Evidence", n.best_evidence ? `<span class="badge b-ev">${n.best_evidence}</span>` : "—")}
   ${row("Response Type", safeV(n.response_type))}${responseTypeInterpretation}
-  ${edgePhenotypes.length > 0 ? row("Phenotypes", safeV(edgePhenotypes)) : ""}${variantPopulationNote}${row("Gene Families", safeV(n.gene_family))}
+  ${edgePhenotypes.length > 0 ? row("Phenotypes", safeV(edgePhenotypes)) : ""}${row("Gene Families", safeV(n.gene_family))}
   ${row("Edge Types", safeV(n.connected_edge_types))}
 </div>
 ${n.type !== "gene" ? `<div class="dp-section">
@@ -2324,6 +2336,9 @@ ${n.type !== "gene" ? `<div class="dp-section">
   ${row("Best p-value", n.best_gwas_p_value != null ? n.best_gwas_p_value.toExponential(3) : "—")}
   ${row("Studies", n.n_gwas_studies || "—")}${row("Traits", safeV(n.gwas_traits))}
   ${row("PharmGKB p", n.pharmgkb_best_p_value != null ? n.pharmgkb_best_p_value.toExponential(3) : "—")}
+  <div class="dp-row" style="margin-top:6px;padding:8px 10px;background:rgba(147,51,234,0.05);border-left:3px solid rgba(147,51,234,0.3);border-radius:4px">
+  <span class="dp-val" style="color:var(--dim);font-size:11px;font-style:italic">GWAS (Genome-Wide Association Studies) identify genetic variants linked to traits/diseases in large populations. Lower p-values indicate stronger statistical evidence. Significant variants (p < 5×10⁻⁸) are reliably associated with the listed traits.</span>
+</div>
 </div>` : ""}${variantFreqHtml}`;
         }
 
@@ -2348,8 +2363,11 @@ ${n.type !== "gene" ? `<div class="dp-section">
 <div class="dp-section">
   <div class="dp-section-title">Connection</div>
   ${row("From", src?.label || l.source_label || "?")}${row("To", tgt?.label || l.target_label || "?")}
-  ${row("Edge Type", l.edge_type)}${row("Source DB", safeV(l.source_database))}${row("Layer", l.layer)}
+  ${row("Edge Type", l.edge_type)}${row("Source DB", safeV(l.source_database))}
   ${isPred ? row("Prediction Score", l.interaction_score_max != null ? (l.interaction_score_max * 100).toFixed(1) + "%" : "—") : ""}
+  ${isPred ? `<div class="dp-row" style="margin-top:6px;padding:8px 10px;background:rgba(56,189,248,0.05);border-left:3px solid rgba(56,189,248,0.3);border-radius:4px">
+  <span class="dp-val" style="color:var(--dim);font-size:11px;font-style:italic">Prediction score indicates the model's confidence that this gene-drug interaction exists based on graph structure, gene families, drug classes, and population frequency patterns.</span>
+</div>` : ""}
 </div>
 <div class="dp-section">
   <div class="dp-section-title">Evidence</div>
@@ -2357,20 +2375,20 @@ ${n.type !== "gene" ? `<div class="dp-section">
   ${row("Association", safeV(l.association))}${row("Interaction Type", safeV(l.interaction_type))}
   ${row("PMIDs", safeV(l.pmids))}
 </div>
-<div class="dp-section">
+${l.edge_type !== "variant_population" ? `<div class="dp-section">
   <div class="dp-section-title">GWAS</div>
   ${row("Significant", l.gwas_significant ? `<span class="badge b-gwas">YES</span>` : "No")}
   ${row("p-value", l.best_gwas_p_value != null ? l.best_gwas_p_value.toExponential(3) : "—")}
-  ${row("Odds Ratio", l.best_gwas_odds_ratio != null ? l.best_gwas_odds_ratio.toFixed(3) : "—")}
-  ${row("Beta", l.best_gwas_beta != null ? l.best_gwas_beta.toFixed(4) : "—")}
   ${row("Trait", safeV(l.best_gwas_trait))}
+  <div class="dp-row" style="margin-top:6px;padding:8px 10px;background:rgba(147,51,234,0.05);border-left:3px solid rgba(147,51,234,0.3);border-radius:4px">
+  <span class="dp-val" style="color:var(--dim);font-size:11px;font-style:italic">GWAS (Genome-Wide Association Studies) identify genetic variants linked to traits/diseases in large populations. Lower p-values indicate stronger statistical evidence. Significant variants (p < 5×10⁻⁸) are reliably associated with the listed traits.</span>
 </div>
-<div class="dp-section">
+</div>` : ""}${(l.interaction_score_max != null || l.pharmgkb_best_p_value != null || freqHtml) ? `<div class="dp-section">
   <div class="dp-section-title">Scores & Frequencies</div>
   ${row("Interaction Score", l.interaction_score_max != null ? l.interaction_score_max.toFixed(3) : "—")}
   ${row("PharmGKB p", l.pharmgkb_best_p_value != null ? l.pharmgkb_best_p_value.toExponential(3) : "—")}
   ${freqHtml}
-</div>`;
+</div>` : ""}`;
         }
 
         // ─── Table drawer ─────────────────────────────────────────────────────────
@@ -2461,21 +2479,15 @@ ${n.type !== "gene" ? `<div class="dp-section">
 
                 // Show PharmGKB filters for "without_predictions" and "with_predictions"
                 const isPgx = layer === "without_predictions" || layer === "with_predictions";
-                
-                // Show Prediction filters for "with_predictions" and "predictions_only"
-                const isPred = layer === "with_predictions" || layer === "predictions_only";
 
                 // Show/hide PGx filters
                 pgxFilters.classList.toggle("visible", isPgx);
                 pgxSep.style.display = isPgx ? "block" : "none";
 
-                // Show/hide Prediction filters
-                predFilters.classList.toggle("visible", isPred);
-                predSep.style.display = isPred ? "block" : "none";
-
                 // Load on demand
                 if (isPgx && !S.pharmGraph) { loadPharmGKB(); return; }
-                if (isPred && !S.predGraph) { loadPredictions(); return; }
+                if (layer === "with_predictions" && !S.predGraph) { loadPredictions(); return; }
+                if (layer === "predictions_only" && !S.predGraph) { loadPredictions(); return; }
 
                 S.selectedNode = null;
                 hideLanding();
@@ -2523,15 +2535,13 @@ ${n.type !== "gene" ? `<div class="dp-section">
             searchInput.value = ""; S.selectedNode = null; S.selectedNodes.clear(); S.selectedEdge = null; S.browseType = null; S._prevBrowseType = null;
             S.nodePositions.clear();
             S.activeLayer = "without_predictions";
-            S.filters = { edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all", association: "all", maxNodes: 200, phenotype: "all", population: "all", gwasOnly: false, hidePop: false, predMinScore: 0 };
-            if (predScoreSlider) { predScoreSlider.value = 0; predScoreVal.textContent = "0%"; }
+            S.filters = { edgeType: "all", geneFamily: "all", sourceDb: "all", evidenceLevel: "all", association: "all", maxNodes: 200, phenotype: "all", population: "all", gwasOnly: false, hidePop: false };
             combos.forEach(c => c.set("all")); cMax.set("200");
             gwasChk.checked = false; if (hidePopChk) hidePopChk.checked = false;
             // Reset layer buttons
             document.querySelectorAll(".lbtn").forEach(b => b.classList.toggle("active", b.dataset.layer === "without_predictions"));
             // Show PharmGKB filters by default (since without_predictions includes PharmGKB)
             pgxFilters.classList.add("visible"); pgxSep.style.display = "block";
-            predFilters.classList.remove("visible"); predSep.style.display = "none";
             document.querySelectorAll(".epill").forEach(p => p.classList.remove("active"));
             closePanel(); showLanding(); setStatus("Reset.");
         });
