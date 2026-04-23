@@ -43,7 +43,6 @@ Overall, PharmGraph functions as both an exploratory tool and a predictive syste
 ```bash
 git clone https://github.com/venkat-aruna/pharmgraph.git
 cd pharmgraph
-python -m http.server 8000
 ```
 
 ### 2. Start local web server
