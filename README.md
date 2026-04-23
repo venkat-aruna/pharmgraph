@@ -1,5 +1,7 @@
 # PharmGraph  
-A Pharmacogenomics Knowledge Graph & Clinical Analytics Platform  
+A Pharmacogenomics Knowledge Graph & Clinical Analytics Platform 
+
+(disease_gene_drug_variant_graph.png)
 
 ## DESCRIPTION  
 
@@ -62,6 +64,16 @@ Once the server is running:
 4. **Explore Relationships**: Click on nodes for identity information, PGx evidence, and GWAS statistics
 5. **Filter the Graph**: Use the top filter bar to refine by gene family, source database, evidence level, phenotype, population, and relationship type
 6. **Switch Layers**: Toggle between clinical data, modeled predictions, and combined views
+
+## SCREENSHOTS
+
+### Population Analysis
+![Population Frequencies](variant_graph.png)
+*Variant frequencies across 9 global populations*
+
+### Prediction Layer
+![ML Predictions](predicted_graph.png)
+*Novel drug-gene interactions predicted by machine learning*
 
 
 ## NOTES
