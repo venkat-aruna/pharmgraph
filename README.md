@@ -1,7 +1,7 @@
 # PharmGraph  
 A Pharmacogenomics Knowledge Graph & Clinical Analytics Platform 
 
-(disease_gene_drug_variant_graph.png)
+![Overall Graph](disease_gene_drug_variant_graph.png)
 
 ## DESCRIPTION  
 
