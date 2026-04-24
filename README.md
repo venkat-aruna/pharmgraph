@@ -25,7 +25,7 @@ Overall, PharmGraph functions as both an exploratory tool and a predictive syste
 - **Multi-Layer Architecture**: Toggle between clinical data, modeled predictions, and combined views
 - **Smart Filtering**: Filter by gene family, source database, evidence level, phenotype, population, relationship type, and GWAS significance
 - **ML-Powered Predictions**: Discover novel drug-gene interactions predicted by graph neural networks
-- **Clinical Context**: GWAS statistics, PGx annotations, and an integrated bioinformatics pipeline for computing variant frequencies 
+- **Clinical Context**: GWAS statistics, PGx annotations, and gnomAD variant frequencies  
 
 ## PREREQUISITES
 
@@ -85,8 +85,8 @@ If you are interested in our raw datasets, you can find them here:
   - This includes hgnc_complete_set.txt
 5. **HGNC Gene Families**: https://www.genenames.org/download/gene-groups/
   - This includes hierarchy.csv
-6. **ClinVar**: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/
-  - This includes clinvar.vcf.gz
+6. **gnomAD**: https://gnomad.broadinstitute.org/data
+  - used API to scrape for variant frequencies 
 
 
 ## FUTURE IMPROVEMENTS
