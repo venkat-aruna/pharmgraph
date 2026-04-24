@@ -75,9 +75,19 @@ Once the server is running:
 *Novel drug-gene interactions predicted by machine learning*
 
 
-## NOTES
+## RAW DATA
+If you are interested in our raw datasets, you can find them here:
+1. **ClinPGX**: [Click Disease, Gene, Drug, Variant, or Population on the landing page](https://www.clinpgx.org/downloads )
+  - This includes ClinicalVariants.zip, SummaryAnnotations.zip, and relationships.zip
+3. **DGIdb**: [Type a gene (e.g., "CYP2D6"), drug (e.g., "Warfarin"), or variant (e.g., "rs4149056") or just explore](https://dgidb.org/downloads )
+  - This includes interactions.tsv
+4. **HGNC**: [Click on edges for relationship details, evidence, and interaction scores](https://www.genenames.org/download/ )
+  - This includes hgnc_complete_set.txt
+5. **HGNC Gene Families**: [Click on nodes for identity information, PGx evidence, and GWAS statistics](https://www.genenames.org/download/gene-groups/)
+  - This includes hierarchy.csv
+6. **ClinVar**: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/
+  - This includes clinvar.vcf.gz
 
-PharmGraph is a research-oriented system for integrating pharmacogenomic knowledge into a unified graph-based framework. It supports exploration, interpretation, and prediction of drug–gene relationships.
 
 ## FUTURE IMPROVEMENTS
 
