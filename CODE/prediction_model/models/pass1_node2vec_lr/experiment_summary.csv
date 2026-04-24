@@ -1,0 +1,14 @@
+item,value
+graph_nodes,27355.0
+graph_edges,68122.0
+embedding_dim,128.0
+walk_length,40.0
+num_walks,10.0
+window,10.0
+train_pairs,103070.0
+val_pairs,17258.0
+test_pairs,17684.0
+val_roc_auc,0.9354732451637795
+val_average_precision,0.9495576942403616
+test_roc_auc,0.9353362411852584
+test_average_precision,0.9502612132409924

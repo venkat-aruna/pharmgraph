@@ -1,0 +1,11 @@
+artifact,count
+nodes,27355
+context_edges,16587
+train_graph_edges,68122
+train_pos_fixed,51535
+val_pos_fixed,8629
+test_pos_fixed,8842
+train_neg,51535
+val_neg,8629
+test_neg,8842
+moved_support_edges,3231
