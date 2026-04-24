@@ -77,13 +77,13 @@ Once the server is running:
 
 ## RAW DATA
 If you are interested in our raw datasets, you can find them here:
-1. **ClinPGX**: (https://www.clinpgx.org/downloads )
+1. **ClinPGX**: https://www.clinpgx.org/downloads
   - This includes ClinicalVariants.zip, SummaryAnnotations.zip, and relationships.zip
-3. **DGIdb**: (https://dgidb.org/downloads )
+3. **DGIdb**: https://dgidb.org/downloads
   - This includes interactions.tsv
-4. **HGNC**: (https://www.genenames.org/download/ )
+4. **HGNC**: https://www.genenames.org/download/
   - This includes hgnc_complete_set.txt
-5. **HGNC Gene Families**: (https://www.genenames.org/download/gene-groups/)
+5. **HGNC Gene Families**: https://www.genenames.org/download/gene-groups/
   - This includes hierarchy.csv
 6. **ClinVar**: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/
   - This includes clinvar.vcf.gz
