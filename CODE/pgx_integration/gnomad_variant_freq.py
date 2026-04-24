@@ -1,38 +1,20 @@
 #!/usr/bin/env python
 """
 =============================================================================
-PharmGKB Variant Frequency Calculator — FIXED VERSION
-=============================================================================
+PharmGKB Variant Frequency Calculator 
 
-WHAT CHANGED FROM THE PREVIOUS VERSION:
-  The gnomAD GraphQL API now blocks programmatic access (returns 403 Forbidden).
-  This version uses TWO alternative sources instead:
-
-  SOURCE 1 — Ensembl REST API /variation endpoint
-    - Returns gnomAD population frequencies directly
-    - Free, no account needed
-    - URL: https://rest.ensembl.org/variation/human/{rsid}
-
-  SOURCE 2 — Ensembl REST API /vep (fallback)
-    - Variant Effect Predictor — annotates variants with gnomAD freqs
-    - Used if source 1 has no population data for a variant
-
-  Both return the same gnomAD population codes:
+Uses Ensembl API to pull gnomAD population frequencies for the following 
+populations:
     AFR, AMR, ASJ, EAS, FIN, NFE, OTH, SAS
+Can resume after cancelling; checkpoints save after every variant
 
-BEFORE YOU RUN:
-  pip install pandas requests
-
-HOW TO RUN:
+Usage: 
   python gnomad_variant_freq.py
 
-HOW TO RESUME AFTER CANCELLING:
-  Run the same command again — checkpoints save after every variant.
-
-RUN THE DIAGNOSTIC FIRST (optional but recommended):
-  python gnomad_variant_freq.py --diagnose
-  This tests your API connection and shows what data looks like before
-  running the full job.
+Outputs: 
+    pharmgkb_frequencies_wide.tsv
+    pharmgkb_frequencies_long.tsv
+    drug_response_map.tsv
 =============================================================================
 """
 
@@ -44,9 +26,9 @@ import os
 import json
 import sys
 
-# =============================================================================
+# ===========================================================================
 # CONFIGURATION
-# =============================================================================
+# ===========================================================================
 
 PHARMGKB_FILE     = "./summary_annotations.tsv"
 OUTPUT_WIDE       = "./pharmgkb_frequencies_wide.tsv"
@@ -55,7 +37,7 @@ OUTPUT_DRUG_MAP   = "./drug_response_map.tsv"
 CHECKPOINT_COORDS = "./checkpoint_coords.json"
 CHECKPOINT_FREQS  = "./checkpoint_frequencies.json"
 
-SLEEP_API = 0.34          # ~3 requests/sec — safe for Ensembl's limit of 15/sec
+SLEEP_API = 0.34          # ~3 requests/sec (Ensembl's limit is 15/sec)
 REQUEST_TIMEOUT = 15      # seconds before giving up on a single API call
 MAX_RETRIES = 3           # how many times to retry a failed API call
 
@@ -202,21 +184,15 @@ def load_pharmgkb(filepath):
 
 # =============================================================================
 # STEP 2: FETCH FREQUENCIES FROM ENSEMBL
-# =============================================================================
 #
-# HOW THIS WORKS:
 #   Ensembl's variation endpoint returns an object for each rsID that includes
 #   a 'populations' list. Each entry in that list has:
-#     - population: e.g. "gnomAD:afr", "gnomAD:nfe", "1000GENOMES:CEU", etc.
-#     - frequency: the allele frequency (0.0 to 1.0)
-#     - allele: which allele this frequency is for ("A", "C", "T", "G")
+#     - population: (gnomAD:afr")
+#     - frequency: allele frequency (0.0 to 1.0)
+#     - allele: the allele this frequency is for ("A", "C", "T", "G")
 #
-#   We filter to only the gnomAD populations (entries starting with "gnomAD:")
-#   and extract the alternate allele frequency (the non-reference one).
-#
-# WHY ENSEMBL AND NOT GNOMAD DIRECTLY?
-#   gnomAD's API now returns 403 Forbidden for non-browser requests.
-#   Ensembl mirrors gnomAD data and has a stable, open REST API.
+#    Filter to only include the gnomAD populations and extract the alternate 
+#    allele frequency.
 # =============================================================================
 
 def fetch_frequencies_from_ensembl(rsid):
@@ -265,7 +241,7 @@ def fetch_frequencies_from_ensembl(rsid):
             #     {
             #       "population": "gnomAD:afr",
             #       "genotype": "T|C",
-            #       "frequency": 0.0152,   <-- this is the alt allele freq we want
+            #       "frequency": 0.0152,  
             #       ...
             #     },
             #     ...
@@ -307,7 +283,7 @@ def fetch_frequencies_from_ensembl(rsid):
                 # Determine if this genotype entry represents the alternate allele.
                 # Genotypes look like "T|C" (het) or "C|C" (hom alt) or "T|T" (hom ref).
                 # We want to find the frequency of the alternate (non-reference) allele.
-                # Strategy: if the genotype contains the non-reference allele, record it.
+                # if the genotype contains the non-reference allele, record it.
                 # We look for heterozygous entries (one ref, one alt) and use their freq.
                 alleles_in_genotype = set(re.split(r'[|/]', genotype))
 

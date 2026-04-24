@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 """
 export_pharmgkb_layer.py
 ------------------------
-Reads pharmgkb_wide_enriched.tsv and pharmgkb_long_enriched.tsv and produces:
+Takes in pharmgkb_wide_enriched.tsv and pharmgkb_long_enriched.tsv
 
+Output: 
   pharmgkb_graph_chunks/
     nodes_variant_001.json        -- variant nodes (rsid-keyed)
     nodes_gene_001.json           -- gene nodes enriched with GWAS gene-level stats
@@ -13,13 +15,10 @@ Reads pharmgkb_wide_enriched.tsv and pharmgkb_long_enriched.tsv and produces:
     edges_variant_pop_001.json    -- variant → population edges with allele frequency
   pharmgkb_layer.json             -- manifest consumed by index.html
 
-The chunk format is identical to the one produced by export_full_graph_json.py so
-the existing loader in index.html can consume it without modification.  New fields
-are carried as extra keys on each node/link; the UI will recognise them via the
-PharmGKB layer toggle logic added to index.html.
 
-Run from the directory that contains the two TSV files:
+Usage (run in the directory with pharmgkb_wide_enriched.tsv and pharmgkb_long_enriched.tsv):
     python export_pharmgkb_layer.py
+
 """
 
 import json
@@ -42,13 +41,13 @@ MAX_NODES_PER_FILE = 3000
 MAX_EDGES_PER_FILE = 5000
 
 # ---------------------------------------------------------------------------
-# Colour palette  (consistent with existing graph; new types get new colours)
+# Colour palette 
 # ---------------------------------------------------------------------------
 NODE_COLORS = {
-    "variant":    "#a855f7",   # purple  – same as existing graph
-    "gene":       "#f59e0b",   # amber   – same as existing graph
-    "drug":       "#60a5fa",   # blue    – same as existing graph
-    "population": "#10b981",   # emerald – NEW
+    "variant":    "#a855f7",   # purple  
+    "gene":       "#f59e0b",   # amber   
+    "drug":       "#60a5fa",   # blue    
+    "population": "#10b981",   # emerald 
 }
 
 # Population code → readable label
@@ -328,7 +327,7 @@ def build_graph(wide: pd.DataFrame, long_df: pd.DataFrame):
             edges.append(vd_edge)
 
     # ------------------------------------------------------------------
-    # 3. Population-frequency edges from the LONG table
+    # 3. Population-frequency edges from the long table
     # ------------------------------------------------------------------
     # One edge per (rsid, population_code) – aggregate across drugs/phenotypes
     pop_edge_accum: dict = defaultdict(lambda: {

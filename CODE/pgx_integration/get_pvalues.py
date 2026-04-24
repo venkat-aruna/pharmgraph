@@ -2,48 +2,25 @@
 """
 =============================================================================
 P-Value & Significance Enrichment Script
-=============================================================================
 
-WHAT THIS DOES:
-  Takes your existing pharmgkb_frequencies_wide.tsv (or long) and adds
-  statistical significance data from two sources:
+Takes pharmgkb_frequencies_wide.tsv (or long) and adds statistical 
+significance data from two sources:
+    GWAS Catalog (ebi.ac.uk/gwas)
+        returns p_value, beta, odds ratiom ci_lower/upper, trait, 
+        study_accession and pubmed_id for each rsID
+    PharmGKB Variant Annotations (var_drug_ann.tsv) 
+        optional 
 
-  SOURCE 1 — GWAS Catalog (ebi.ac.uk/gwas)
-    The gold standard for GWAS p-values. Curated by EMBL-EBI/NHGRI.
-    Returns for each rsID:
-      - p_value          actual p-value from the published study
-      - beta             effect size (how much does the variant shift outcome)
-      - odds_ratio       alternative to beta for binary traits
-      - ci_lower/upper   95% confidence interval
-      - trait            what phenotype/outcome was studied
-      - study_accession  the GWAS Catalog study ID (e.g. GCST001234)
-      - pubmed_id        the paper it came from
+Can resume after cancelling; checkpoints save after every variant
 
-  SOURCE 2 — PharmGKB Variant Annotations (optional, if you have the file)
-    A separate PharmGKB download (var_drug_ann.tsv) containing study-level
-    p-values that curators manually extracted from pharmacogenomics papers.
-    More drug-specific than GWAS Catalog but requires an extra download.
+Usage: 
+    python get_pvalues.py
 
-OUTPUT FILES:
-  gwas_pvalues.tsv          all GWAS Catalog hits per rsID (one row per study)
-  pharmgkb_wide_enriched.tsv  your wide TSV + best p-value columns added
-  pharmgkb_long_enriched.tsv  your long TSV + best p-value columns added
+Outputs:
+  gwas_pvalues.tsv         
+  pharmgkb_wide_enriched.tsv 
+  pharmgkb_long_enriched.tsv 
 
-BEFORE YOU RUN:
-  pip install pandas requests
-
-HOW TO RUN:
-  python get_pvalues.py
-
-RESUME AFTER CANCELLING:
-  Run the same command — saves progress after each rsID.
-
-OPTIONAL EXTRA SOURCE:
-  Download "Variant Annotations" from pharmgkb.org/downloads
-  Save as var_drug_ann.tsv in the same folder, script auto-detects it.
-
-RUN DIAGNOSTIC FIRST:
-  python get_pvalues.py --diagnose
 =============================================================================
 """
 
@@ -77,50 +54,6 @@ MAX_RETRIES      = 3        # retry count on failure
 # p < 5e-8 is the conventional cutoff when testing millions of variants.
 # Associations above this threshold may still be real but need replication.
 GWAS_SIG_THRESHOLD = 5e-8
-
-
-# =============================================================================
-# WHAT P-VALUES MEAN IN THIS CONTEXT — a plain English guide
-# =============================================================================
-#
-# p_value:
-#   The probability of seeing this association by chance if there were no
-#   real effect. p=0.001 means 0.1% chance it's a fluke.
-#   In GWAS, the bar is p < 5×10⁻⁸ (0.00000005) because we test millions
-#   of variants simultaneously (Bonferroni correction).
-#   p=1e-20 is extremely strong. p=0.05 is weak in this context.
-#
-# beta:
-#   For continuous traits (e.g. drug concentration, enzyme activity):
-#   How many standard deviations does the outcome shift per copy of the alt allele?
-#   beta=0.5 means each copy of the variant raises the trait by 0.5 SD.
-#   Negative beta = the alt allele lowers the trait.
-#
-# odds_ratio:
-#   For binary traits (e.g. had adverse reaction: yes/no):
-#   How many times more likely is the outcome in variant carriers?
-#   OR=2.0 means 2x more likely. OR=0.5 means half as likely.
-#   OR=1.0 means no effect.
-#
-# ci_lower / ci_upper:
-#   95% confidence interval around the beta or odds ratio.
-#   If CI does not cross 0 (for beta) or 1 (for OR), it's significant.
-#   Narrow CI = precise estimate. Wide CI = uncertain.
-#
-# n_cases / n_samples:
-#   How many people were in the study. Larger = more reliable.
-#
-# gwas_significant:
-#   True if p_value < 5×10⁻⁸ — meets genome-wide significance threshold.
-#
-# n_gwas_studies:
-#   How many different GWAS studies found this variant significant.
-#   More independent replications = stronger evidence.
-#
-# best_p_value:
-#   The smallest (strongest) p-value seen across all GWAS studies for this rsID.
-#   We add this as a single summary column to your wide/long TSV.
-
 
 # =============================================================================
 # DIAGNOSTIC MODE
@@ -175,28 +108,12 @@ def save_checkpoint(data):
 
 # =============================================================================
 # GWAS CATALOG API
-# =============================================================================
 #
 # The GWAS Catalog REST API is at: https://www.ebi.ac.uk/gwas/rest/api
 # Documentation: https://www.ebi.ac.uk/gwas/docs/api
 #
 # We use the /singleNucleotidePolymorphisms/{rsid}/associations endpoint.
 # This returns all GWAS associations ever recorded for a variant.
-#
-# The response is paginated — we follow pages until we have everything.
-# Each association record contains the statistical results from one GWAS study.
-#
-# GWAS Catalog covers:
-#   - Drug response studies (efficacy, toxicity, dosage)
-#   - Disease associations (relevant because many PGx variants affect disease risk)
-#   - Quantitative traits (e.g. plasma drug levels, enzyme activity)
-#
-# LIMITATIONS:
-#   - Not all PharmGKB variants will have GWAS Catalog hits.
-#     Some PGx variants were found in candidate gene studies (not GWAS),
-#     which are not in the GWAS Catalog.
-#   - p-values are from specific studies — different studies may give
-#     different p-values for the same variant due to population differences.
 # =============================================================================
 
 GWAS_BASE = "https://www.ebi.ac.uk/gwas/rest/api"
@@ -490,26 +407,6 @@ def fetch_all_gwas(rsids):
 
 # =============================================================================
 # LOAD OPTIONAL PharmGKB VARIANT ANNOTATIONS (study-level p-values)
-# =============================================================================
-#
-# This is a DIFFERENT file from the Clinical Annotations you already have.
-# Download from pharmgkb.org/downloads → "Variant Annotations" → var_drug_ann.tsv
-#
-# Clinical Annotations = SUMMARIES (one row per variant-drug, no raw p-values)
-# Variant Annotations  = RAW STUDY DATA (one row per paper, with p-values)
-#
-# The variant annotations file has a column called "P Value" which contains
-# p-values manually extracted by PharmGKB curators from each paper.
-# These are more drug-specific than GWAS Catalog (which includes all traits).
-#
-# Columns we use:
-#   Variant/Haplotypes  rsID
-#   Gene                gene name
-#   Drug(s)             drug name
-#   P Value             p-value text from the paper (may be "0.001", "<0.05", "NS")
-#   Significance        "yes" / "no" — was the finding significant?
-#   Sentence            the actual sentence from the paper (context for the p-value)
-#   PMID                PubMed ID of the source paper
 # =============================================================================
 
 def load_pharmgkb_variant_annotations(filepath):
